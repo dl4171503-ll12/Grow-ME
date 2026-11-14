@@ -189,4 +189,4 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 - [references/agent-bus.md](references/agent-bus.md) — 多 agent 总线：五要素、消息生命周期、文档交接、催办与故障排查
 - [references/sources.md](references/sources.md) — 来源、致谢、版本记录
 - `scripts/validate-skill.mjs` — 自校验：`node scripts/validate-skill.mjs`
-- `RELEASE.md` + `scripts/release.ps1` — 版本发布流程：**发布新版本第一步 = 先同步 GitHub 仓库 `dl4171503-ll12/Grow-ME`**，再更新本机安装副本
+- 版本发布：**仓库根目录**的 `RELEASE.md` 与 `scripts/release.ps1` —— **发布新版本第一步 = 先推 GitHub 仓库 `dl4171503-ll12/Grow-ME`**，再更新本机安装副本（本机安装目录只有技能本体，没有仓库级文件，属正常）
