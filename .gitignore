@@ -1,0 +1,10 @@
+# grow-me 运行时产物与本地环境
+.grow-me/
+**/.grow-me/
+node_modules/
+dist/
+*.skill
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini

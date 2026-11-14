@@ -1,0 +1,37 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate-skill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate skill structure
+        run: node grow-me/scripts/validate-skill.mjs grow-me
+      - name: Check evals structure
+        run: |
+          node -e "
+          const fs = require('fs');
+          const e = JSON.parse(fs.readFileSync('grow-me/evals/evals.json', 'utf8'));
+          if (!Array.isArray(e.evals) || e.evals.length < 3) { throw new Error('need >=3 evals'); }
+          for (const c of e.evals) { if (!c.id || !c.prompt || !Array.isArray(c.assertions)) { throw new Error('bad eval: ' + (c.id || '?')); } }
+          console.log('evals ok:', e.evals.length);
+          "
+      - name: Check version consistency
+        run: |
+          node -e "
+          const fs = require('fs');
+          const v = fs.readFileSync('VERSION', 'utf8').trim();
+          const skill = fs.readFileSync('grow-me/SKILL.md', 'utf8');
+          const evals = JSON.parse(fs.readFileSync('grow-me/evals/evals.json', 'utf8'));
+          if (!skill.includes('version: ' + v)) throw new Error('SKILL.md version != ' + v);
+          if (evals.version !== v) throw new Error('evals.version != ' + v);
+          console.log('version ok:', v);
+          "
