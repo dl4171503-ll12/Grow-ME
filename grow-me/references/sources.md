@@ -32,6 +32,15 @@
 
 ## 版本记录
 
+### V1.5.0（接管控制台 + 端口 8176）
+- 规则九「接管与控制台」：接手后立刻起本地控制台（默认 `127.0.0.1:8176`，占用自动 +1）、扫描本机 AI、
+  把"已完成"登记成 证据台账（无证据 = 未验证 = 视同说谎）。
+- 新增 `scripts/console.mjs` + `scripts/console.html` + `scripts/scan-ai.mjs`：
+  Loss 工作台（瞎猜线 8.76 / 目标区间 2~3）、AI 与技能安装扫描、证据台账、模型备份清单。
+- 新增 `references/console.md`、`references/minmind-training.md`（6 阶段 × 3 子阶段、checkpoint、
+  概念解释要求）。
+- 规则一至八语义不变；红线与自检各补一条"控制台/证据"检查。
+
 ### V1.4.0（开源同步 + 发布流程）
 - 仓库：`https://github.com/dl4171503-ll12/Grow-ME`（公开），本 skill 的版本发布以此仓库为**第一落点**。
 - 新增 `RELEASE.md` / `scripts/release.ps1`：发布清单固定为「改版本号 → 跑校验 → 提交打 tag → **先推仓库** → 再更新本机安装副本」。

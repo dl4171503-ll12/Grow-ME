@@ -3,6 +3,16 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.5.0 — 接管控制台（端口 8176）
+
+- 规则九「接管与控制台」：接手后立刻起本地控制台（默认 `127.0.0.1:8176`，端口占用自动 +1）、
+  扫描本机 AI 并标注哪些装了 grow-me、把"已完成"登记成证据台账（无证据 = 未验证 = 视同说谎）。
+- 新增 `grow-me/scripts/console.mjs` + `console.html` + `scan-ai.mjs`：
+  Loss 工作台（瞎猜线 8.76、目标区间 2~3、阶段边界）、AI 扫描、证据台账、模型备份清单。
+- 新增 `grow-me/references/console.md`、`grow-me/references/minmind-training.md`
+  （minmind 预训练：6 阶段 × 3 子阶段、每段 checkpoint、概念解释要求）。
+- 红线与自检各补一条"控制台/证据"检查；规则一至八语义不变。
+
 ## V1.4.0 — 开源同步 + 发布流程
 
 - 仓库公开：<https://github.com/dl4171503-ll12/Grow-ME>，成为版本发布的**第一落点**。

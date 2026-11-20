@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>Grow Me 控制台</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --line:#2a2f3a; --text:#e6e8ee; --dim:#9aa3b2; --ok:#3ddc84; --warn:#ffb020; --bad:#ff5c5c; --accent:#6aa8ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 "Segoe UI",system-ui,sans-serif; }
+  header { position:sticky; top:0; z-index:5; display:flex; gap:16px; align-items:center; padding:14px 20px; background:#12151b; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  h1 { margin:0; font-size:17px; }
+  .badge { padding:2px 8px; border-radius:999px; background:#222834; color:var(--dim); font-size:12px; }
+  .badge.ok { color:#08210f; background:var(--ok); }
+  .badge.warn { color:#2b1d00; background:var(--warn); }
+  main { display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:16px 20px 40px; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; min-width:0; }
+  section.wide { grid-column:1 / -1; }
+  h2 { margin:0 0 10px; font-size:15px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  h2 small { color:var(--dim); font-weight:400; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--dim); font-weight:500; }
+  .ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); } .dim { color:var(--dim); }
+  input,button { background:#0f1319; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px 10px; font:13px/1.4 inherit; }
+  button { cursor:pointer; } button.primary { background:var(--accent); color:#06111f; border-color:transparent; font-weight:600; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .stat { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+  .stat div { background:#12161d; border:1px solid var(--line); border-radius:10px; padding:8px 10px; }
+  .stat b { display:block; font-size:18px; }
+  .stat span { color:var(--dim); font-size:12px; }
+  svg { width:100%; height:auto; background:#0c0f14; border-radius:10px; border:1px solid var(--line); }
+  .legend { display:flex; gap:14px; color:var(--dim); font-size:12px; flex-wrap:wrap; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
+  .fit { max-height:320px; overflow:auto; }
+  footer { color:var(--dim); font-size:12px; padding:0 20px 24px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Grow Me 控制台</h1>
+  <span class="badge" id="addr">连接中…</span>
+  <span class="badge" id="aiBadge">AI: -</span>
+  <span class="badge" id="lieBadge">未验证声明: -</span>
+  <span class="badge" id="lossBadge">Loss: -</span>
+  <button id="refresh">刷新</button>
+  <span class="dim" id="ts"></span>
+</header>
+
+<main>
+  <section class="wide">
+    <h2>Loss 工作台 <small id="lossFile"></small></h2>
+    <div class="stat">
+      <div><span>最新 Loss</span><b id="sLast">-</b></div>
+      <div><span>最低 Loss</span><b id="sMin">-</b></div>
+      <div><span>瞎猜线</span><b id="sLine">8.76</b></div>
+      <div><span>目标区间</span><b id="sTarget">2 ~ 3</b></div>
+    </div>
+    <svg id="chart" viewBox="0 0 900 340" preserveAspectRatio="none"></svg>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--accent)"></i>loss 曲线</span>
+      <span><i class="dot" style="background:var(--bad)"></i>瞎猜线 8.76</span>
+      <span><i class="dot" style="background:var(--ok)"></i>目标区间 2~3</span>
+      <span><i class="dot" style="background:var(--warn)"></i>阶段边界</span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label class="dim">瞎猜线</label><input id="cfgLine" style="width:90px" />
+      <label class="dim">目标低</label><input id="cfgLow" style="width:70px" />
+      <label class="dim">目标高</label><input id="cfgHigh" style="width:70px" />
+      <button class="primary" id="saveCfg">保存</button>
+      <span class="dim">loss 文件：<code id="lossPath"></code></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>本机 AI 扫描 <small id="aiSum"></small></h2>
+    <div class="fit">
+      <table id="aiTable"><thead><tr><th>AI</th><th>类型</th><th>运行中</th><th>装了 grow-me</th><th>证据</th></tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <section>
+    <h2>证据台账（说谎检查） <small id="claimSum"></small></h2>
+    <div class="row" style="margin-bottom:8px">
+      <input id="claimText" placeholder="AI 的声明，例如：已完成预训练，loss 2.4" style="flex:2" />
+      <input id="claimEvidence" placeholder="证据（命令输出 / 路径:行号），留空=未验证" style="flex:2" />
+      <button class="primary" id="addClaim">登记</button>
+    </div>
+    <div class="fit">
+      <table id="claimTable"><thead><tr><th>时间</th><th>声明</th><th>证据</th><th>判定</th></tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <section class="wide">
+    <h2>模型备份（每个小阶段） <small id="ckptSum"></small></h2>
+    <div class="fit">
+      <table id="ckptTable"><thead><tr><th>备份</th><th>时间</th><th>文件数</th><th>大小</th></tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+</main>
+
+<footer>
+  grow-me 控制台 · 端口 8176（占用会自动顺延）· 数据目录 <code id="stateRoot"></code>
+</footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmt = (n, d = 3) => (n === null || n === undefined ? "-" : Number(n).toFixed(d));
+
+function drawChart(loss) {
+  const svg = $("chart");
+  const W = 900, H = 340, pad = { l: 46, r: 16, t: 16, b: 30 };
+  const pts = loss.points || [];
+  const cfg = loss.config || { line: 8.76, targetLow: 2, targetHigh: 3 };
+  const maxLoss = Math.max(cfg.line * 1.15, ...pts.map((p) => p.loss), cfg.targetHigh * 2, 10);
+  const minStep = pts.length ? Math.min(...pts.map((p) => p.step)) : 0;
+  const maxStep = pts.length ? Math.max(...pts.map((p) => p.step)) : 1;
+  const x = (s) => pad.l + ((s - minStep) / Math.max(1, maxStep - minStep)) * (W - pad.l - pad.r);
+  const y = (v) => pad.t + (1 - v / maxLoss) * (H - pad.t - pad.b);
+  let out = "";
+  // 目标带
+  out += `<rect x="${pad.l}" y="${y(cfg.targetHigh)}" width="${W - pad.l - pad.r}" height="${Math.max(1, y(cfg.targetLow) - y(cfg.targetHigh))}" fill="rgba(61,220,132,.14)" />`;
+  // y 轴刻度
+  for (let i = 0; i <= 5; i++) {
+    const v = (maxLoss / 5) * i;
+    out += `<line x1="${pad.l}" y1="${y(v)}" x2="${W - pad.r}" y2="${y(v)}" stroke="#20242e" />`;
+    out += `<text x="${pad.l - 8}" y="${y(v) + 4}" fill="#9aa3b2" font-size="11" text-anchor="end">${v.toFixed(1)}</text>`;
+  }
+  // 瞎猜线
+  out += `<line x1="${pad.l}" y1="${y(cfg.line)}" x2="${W - pad.r}" y2="${y(cfg.line)}" stroke="#ff5c5c" stroke-dasharray="6 4" />`;
+  out += `<text x="${W - pad.r - 4}" y="${y(cfg.line) - 6}" fill="#ff5c5c" font-size="11" text-anchor="end">瞎猜线 ${cfg.line}</text>`;
+  // 阶段边界
+  let lastPhase = null;
+  for (const p of pts) {
+    if (p.phase !== null && p.phase !== lastPhase) {
+      lastPhase = p.phase;
+      out += `<line x1="${x(p.step)}" y1="${pad.t}" x2="${x(p.step)}" y2="${H - pad.b}" stroke="#ffb020" stroke-dasharray="2 4" opacity=".7" />`;
+      out += `<text x="${x(p.step) + 3}" y="${pad.t + 12}" fill="#ffb020" font-size="10">P${p.phase}</text>`;
+    }
+  }
+  // 曲线
+  if (pts.length) {
+    const d = pts.map((p, i) => `${i ? "L" : "M"}${x(p.step).toFixed(1)},${y(p.loss).toFixed(1)}`).join(" ");
+    out += `<path d="${d}" fill="none" stroke="#6aa8ff" stroke-width="2" />`;
+    const lp = pts[pts.length - 1];
+    out += `<circle cx="${x(lp.step)}" cy="${y(lp.loss)}" r="4" fill="#6aa8ff" />`;
+    out += `<text x="${x(lp.step) - 6}" y="${y(lp.loss) - 10}" fill="#6aa8ff" font-size="11" text-anchor="end">${lp.loss.toFixed(3)}</text>`;
+  } else {
+    out += `<text x="${W / 2}" y="${H / 2}" fill="#9aa3b2" font-size="13" text-anchor="middle">还没有 loss 数据：把训练日志写成 CSV（step,loss[,phase]）放到 .grow-me/loss/loss.csv</text>`;
+  }
+  out += `<text x="${pad.l}" y="${H - 8}" fill="#9aa3b2" font-size="11">step ${minStep}</text>`;
+  out += `<text x="${W - pad.r}" y="${H - 8}" fill="#9aa3b2" font-size="11" text-anchor="end">${maxStep}</text>`;
+  svg.innerHTML = out;
+}
+
+async function refresh() {
+  const s = await (await fetch("/api/status")).json();
+  $("addr").textContent = `http://127.0.0.1:${s.port}`;
+  $("ts").textContent = "更新于 " + new Date().toLocaleTimeString();
+  $("stateRoot").textContent = s.root;
+
+  // AI
+  const ai = s.ai || { ai: [], summary: {} };
+  $("aiBadge").textContent = `AI: ${ai.summary.total || 0} 个（运行 ${ai.summary.running || 0}）`;
+  $("aiSum").textContent = `${ai.summary.total || 0} 个被发现 / ${ai.summary.withSkill || 0} 个装了 grow-me`;
+  $("aiTable").querySelector("tbody").innerHTML = (ai.ai || []).map((a) => `
+    <tr><td>${esc(a.name)}</td><td class="dim">${esc(a.kind)}</td>
+    <td class="${a.running ? "ok" : "dim"}">${a.running ? "是" : "否"}</td>
+    <td class="${a.skillInstalled ? "ok" : "warn"}">${a.skillInstalled ? "是" : "否"}</td>
+    <td class="dim">${esc(a.evidence.join(" · "))}</td></tr>`).join("") || `<tr><td colspan="5" class="dim">未发现已知 AI 客户端（可检查 scripts/scan-ai.mjs 的 KNOWN 列表）</td></tr>`;
+
+  // 证据台账
+  const claims = s.claims || { items: [], summary: {} };
+  $("lieBadge").textContent = `未验证声明: ${claims.summary.unverified || 0}`;
+  $("claimSum").textContent = `共 ${claims.summary.total || 0} 条 / 已核验 ${claims.summary.verified || 0} / 未验证 ${claims.summary.unverified || 0}`;
+  $("claimTable").querySelector("tbody").innerHTML = (claims.items || []).slice().reverse().map((c) => `
+    <tr><td class="dim">${esc((c.created_at || "").slice(11, 19))}</td><td>${esc(c.claim)}</td>
+    <td class="dim">${c.evidence ? esc(c.evidence) : "（空）"}</td>
+    <td class="${c.evidence ? "ok" : "bad"}">${c.evidence ? "已核验" : "未验证"}</td></tr>`).join("") || `<tr><td colspan="4" class="dim">还没有登记。AI 说"完成了"就该在这里留下证据。</td></tr>`;
+
+  // loss
+  const loss = s.loss || {};
+  $("lossFile").textContent = loss.exists ? "已加载" : "未找到数据";
+  $("lossPath").textContent = loss.file || "";
+  $("sLast").textContent = loss.stats ? fmt(loss.stats.last) : "-";
+  $("sMin").textContent = loss.stats ? fmt(loss.stats.min) : "-";
+  $("sLine").textContent = loss.config ? loss.config.line : "8.76";
+  $("sTarget").textContent = loss.config ? `${loss.config.targetLow} ~ ${loss.config.targetHigh}` : "2 ~ 3";
+  $("lossBadge").textContent = loss.stats ? (loss.stats.inTarget ? "已到目标区间" : loss.stats.belowLine ? "低于瞎猜线" : "仍高于瞎猜线") : "Loss: 无数据";
+  $("lossBadge").className = "badge " + (loss.stats && loss.stats.belowLine ? "ok" : loss.stats ? "warn" : "");
+  if (loss.config) { $("cfgLine").value = loss.config.line; $("cfgLow").value = loss.config.targetLow; $("cfgHigh").value = loss.config.targetHigh; }
+  drawChart(loss);
+
+  // checkpoints
+  const ck = s.checkpoints || { items: [] };
+  $("ckptSum").textContent = `${(ck.items || []).length} 个备份 · 目录 ${ck.dir}`;
+  $("ckptTable").querySelector("tbody").innerHTML = (ck.items || []).map((i) => `
+    <tr><td>${esc(i.name)}</td><td class="dim">${esc((i.mtime || "").slice(0, 19).replace("T", " "))}</td>
+    <td class="dim">${i.files}</td><td class="dim">${i.sizeMB} MB</td></tr>`).join("") || `<tr><td colspan="4" class="dim">还没有模型备份：训练脚本应按「阶段-子阶段」保存到 runs/</td></tr>`;
+}
+
+$("refresh").onclick = refresh;
+$("saveCfg").onclick = async () => {
+  await fetch("/api/loss/config", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ line: Number($("cfgLine").value), targetLow: Number($("cfgLow").value), targetHigh: Number($("cfgHigh").value) }) });
+  refresh();
+};
+$("addClaim").onclick = async () => {
+  const claim = $("claimText").value.trim();
+  if (!claim) return;
+  await fetch("/api/claims", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ claim, evidence: $("claimEvidence").value.trim() }) });
+  $("claimText").value = ""; $("claimEvidence").value = "";
+  refresh();
+};
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>
