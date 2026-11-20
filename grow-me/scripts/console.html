@@ -43,6 +43,8 @@
   <span class="badge" id="addr">连接中…</span>
   <span class="badge ok" id="mode">只读监测</span>
   <span class="badge" id="beaconBadge">定位仪: -</span>
+  <span class="badge" id="lieRateBadge">说谎率: -</span>
+  <span class="badge" id="wasteRateBadge">浪费率: -</span>
   <span class="badge" id="lieBadge">未验证声明: -</span>
   <span class="badge" id="verBadge">技能版本: -</span>
   <button id="refresh">刷新</button>
@@ -61,6 +63,20 @@
     <div class="row" style="margin-top:8px">
       <span class="dim">给一个 AI 装定位仪：</span>
       <code>node scripts/beacon.mjs register --agent &lt;id&gt; --model &lt;name&gt;</code>
+    </div>
+  </section>
+
+  <section class="wide">
+    <h2>实时消耗 / 说谎程度 <small id="usageSum"></small></h2>
+    <div class="fit">
+      <table id="usageTable">
+        <thead><tr><th>Agent</th><th>说谎程度</th><th>上下文占用</th><th>累计 tokens</th><th>浪费 tokens</th><th>工具调用</th><th>重复读 / 重复跑 / 超大输出</th><th>标记</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <span class="dim">上报消耗：</span>
+      <code>node scripts/beacon.mjs telemetry --agent &lt;id&gt; --tokens 84213 --waste 12040 --ctx-used 45120 --ctx-max 64000 --tool-calls 37 --dup-reads 3</code>
     </div>
   </section>
 
@@ -196,9 +212,34 @@ async function refresh() {
       <td><span class="ok">${a.claims.verified}</span> / <span class="bad">${a.claims.unverified}</span> 未验证</td>
     </tr>`).join("") || `<tr><td colspan="7" class="dim">还没有 AI 报到。装定位仪：node scripts/beacon.mjs register --agent &lt;id&gt; --model &lt;name&gt;</td></tr>`;
 
+  // 实时消耗 / 说谎程度
+  const bs = s.beacons || { agents: [], summary: {} };
+  const sum = bs.summary || {};
+  $("lieRateBadge").textContent = `说谎率: ${sum.lieRate ?? 0}%`;
+  $("lieRateBadge").className = "badge " + ((sum.lieRate || 0) >= 30 ? "bad" : (sum.lieRate || 0) > 0 ? "warn" : "ok");
+  $("wasteRateBadge").textContent = `浪费率: ${sum.wasteRate ?? 0}%`;
+  $("wasteRateBadge").className = "badge " + ((sum.wasteRate || 0) >= 20 ? "bad" : (sum.wasteRate || 0) > 0 ? "warn" : "ok");
+  $("usageSum").textContent = `说谎率 ${sum.lieRate ?? 0}% · 浪费率 ${sum.wasteRate ?? 0}%（${(sum.waste_tokens || 0).toLocaleString()}/${(sum.tokens || 0).toLocaleString()} tokens）· 上下文告警 ${sum.ctxWarn ?? 0} 个`;
+  $("usageTable").querySelector("tbody").innerHTML = (bs.agents || []).map((a) => {
+    const t = a.telemetry;
+    const ctx = a.ctx_pct;
+    const bar = ctx === null
+      ? '<span class="dim">未上报</span>'
+      : `<div style="background:#12161d;border:1px solid var(--line);border-radius:6px;height:14px;width:110px;display:inline-block;vertical-align:middle"><div style="height:100%;width:${Math.min(100, ctx)}%;background:${ctx >= 85 ? "var(--bad)" : ctx >= 65 ? "var(--warn)" : "var(--ok)"};border-radius:5px"></div></div><span class="dim"> ${ctx}%</span>`;
+    return `<tr>
+      <td>${esc(a.agent)}</td>
+      <td class="${a.lie_score >= 30 ? "bad" : a.lie_score > 0 ? "warn" : "ok"}">${a.lie_score}%</td>
+      <td>${bar}${t ? `<span class="dim"> (${t.ctx_used || 0}/${t.ctx_max || 0})</span>` : ""}</td>
+      <td class="dim">${t ? (t.tokens || 0).toLocaleString() : "-"}</td>
+      <td class="${a.waste_pct >= 20 ? "bad" : a.waste_pct > 0 ? "warn" : "ok"}">${t ? `${(t.waste || 0).toLocaleString()} (${a.waste_pct}%)` : "-"}</td>
+      <td class="dim">${t ? (t.tool_calls || 0) : "-"}</td>
+      <td class="dim">${t ? `${t.dup_reads || 0} / ${t.dup_runs || 0} / ${t.big_outputs || 0}` : "-"}</td>
+      <td class="${(a.flags || []).length ? "bad" : "ok"}">${(a.flags || []).join("；") || "正常"}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="8" class="dim">还没有消耗上报。让 AI 定时运行 beacon.mjs telemetry（建议每 10 个工具调用上报一次）</td></tr>`;
+
   // AI 扫描
-  const ai = s.ai || { ai: [], summary: {} };
-  $("aiSum").textContent = `${ai.summary.total || 0} 个被发现 / ${ai.summary.withSkill || 0} 个装了 grow-me`;
+  const ai = s.ai || { ai: [], summary: {} };  $("aiSum").textContent = `${ai.summary.total || 0} 个被发现 / ${ai.summary.withSkill || 0} 个装了 grow-me`;
   $("aiTable").querySelector("tbody").innerHTML = (ai.ai || []).map((a) => `
     <tr><td>${esc(a.name)}</td><td class="dim">${esc(a.kind)}</td>
     <td class="${a.running ? "ok" : "dim"}">${a.running ? "是" : "否"}</td>

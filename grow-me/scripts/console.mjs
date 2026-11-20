@@ -49,6 +49,7 @@ const lossFile = resolve(opts.loss || process.env.GROW_ME_LOSS || join(".grow-me
 const configFile = join(stateRoot, "config.json");
 const claimsFile = join(stateRoot, "claims.jsonl");
 const agentsFile = join(stateRoot, "agents.json");
+const telemetryFile = join(stateRoot, "telemetry.json");
 const runtimeFile = join(stateRoot, "runtime.json");
 
 /** 本机安装的技能版本（"持证"基准） */
@@ -70,15 +71,39 @@ const claimsSummary = (claims) => {
 };
 
 function readAgents() { return readJson(agentsFile, { agents: {} }); }
+
+// ---- 实时消耗（token / 上下文浪费）----
+function readTelemetry() { return readJson(telemetryFile, { agents: {} }); }
+function addTelemetry(id, point) {
+  const db = readTelemetry();
+  db.agents[id] = db.agents[id] || [];
+  db.agents[id].push(point);
+  if (db.agents[id].length > 240) db.agents[id] = db.agents[id].slice(-240);
+  writeJson(telemetryFile, db);
+  return point;
+}
+const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 function beacons() {
   const now = Date.now();
   const reg = readAgents();
   const claims = readClaims();
-  const list = Object.entries(reg.agents || {}).map(([id, a]) => {
+  const telDb = readTelemetry().agents || {};
+  const ids = [...new Set([...Object.keys(reg.agents || {}), ...Object.keys(telDb)])];
+  const list = ids.map((id) => {
+    const a = (reg.agents || {})[id] || {};
     const mine = claims.filter((c) => (c.agent || "console") === id);
     const s = claimsSummary(mine);
     const online = now - Date.parse(a.last_seen || 0) < ONLINE_MS;
     const versionMatch = a.skill_version && a.skill_version === EXPECTED_VERSION;
+    const tel = telDb[id] || [];
+    const lastTel = tel.length ? tel[tel.length - 1] : null;
+    const lieScore = s.total ? Math.round((s.unverified / s.total) * 100) : 0;
+    const wastePct = lastTel ? pct(lastTel.waste, lastTel.tokens) : 0;
+    const ctxPct = lastTel && lastTel.ctx_max ? pct(lastTel.ctx_used, lastTel.ctx_max) : null;
+    const flags = [];
+    if (ctxPct !== null && ctxPct >= 85) flags.push("上下文将满(" + ctxPct + "%)");
+    if (wastePct >= 20) flags.push("浪费高(" + wastePct + "%)");
+    if (lieScore >= 30) flags.push("说谎率高(" + lieScore + "%)");
     return {
       agent: id,
       model: a.model || null,
@@ -93,10 +118,37 @@ function beacons() {
       first_seen: a.first_seen || null,
       last_seen: a.last_seen || null,
       claims: s,
+      lie_score: lieScore,
+      telemetry: lastTel,
+      history: tel.slice(-30).map((p) => ({ ts: p.ts, tokens: p.tokens, waste: p.waste, ctx_pct: p.ctx_max ? pct(p.ctx_used, p.ctx_max) : null })),
+      waste_pct: wastePct,
+      ctx_pct: ctxPct,
+      flags,
     };
   });
   list.sort((a, b) => (a.online === b.online ? String(a.agent).localeCompare(String(b.agent)) : a.online ? -1 : 1));
-  return { expected_version: EXPECTED_VERSION, online_ms: ONLINE_MS, agents: list, summary: { total: list.length, online: list.filter((a) => a.online).length, licensed: list.filter((a) => a.licensed).length, versionMismatch: list.filter((a) => a.licensed && !a.version_match).length } };
+  const totalClaims = list.reduce((n, a) => n + a.claims.total, 0);
+  const totalUnverified = list.reduce((n, a) => n + a.claims.unverified, 0);
+  const sumTokens = list.reduce((n, a) => n + ((a.telemetry && a.telemetry.tokens) || 0), 0);
+  const sumWaste = list.reduce((n, a) => n + ((a.telemetry && a.telemetry.waste) || 0), 0);
+  return {
+    expected_version: EXPECTED_VERSION,
+    online_ms: ONLINE_MS,
+    agents: list,
+    summary: {
+      total: list.length,
+      online: list.filter((a) => a.online).length,
+      licensed: list.filter((a) => a.licensed).length,
+      versionMismatch: list.filter((a) => a.licensed && !a.version_match).length,
+      lieRate: pct(totalUnverified, totalClaims),
+      wasteRate: pct(sumWaste, sumTokens),
+      tokens: sumTokens,
+      waste_tokens: sumWaste,
+      ctxWarn: list.filter((a) => a.ctx_pct !== null && a.ctx_pct >= 85).length,
+      lieWarn: list.filter((a) => a.lie_score >= 30).length,
+      wasteWarn: list.filter((a) => a.waste_pct >= 20).length,
+    },
+  };
 }
 
 function parseLoss() {
@@ -155,7 +207,7 @@ function status() {
   const ai = scanAIs();
   const claims = readClaims();
   return {
-    ok: true, now: new Date().toISOString(), started_at: startedAt,
+    ok: true, mode: "monitor-only", now: new Date().toISOString(), started_at: startedAt,
     port: actualPort, host, root: stateRoot, cwd: process.cwd(),
     expected_version: EXPECTED_VERSION,
     ai, beacons: beacons(),
@@ -204,6 +256,29 @@ const server = http.createServer((req, res) => {
         const licensed = !!reg.agents[body.agent].skill_version && reg.agents[body.agent].skill_version !== "unknown";
         const matching = reg.agents[body.agent].skill_version === EXPECTED_VERSION;
         return send(res, 200, { ok: true, agent: body.agent, beats: reg.agents[body.agent].beats, licensed, version_match: matching, expected_version: EXPECTED_VERSION });
+      }
+      if (route === "/api/telemetry" && req.method === "POST") {
+        if (!body.agent) return send(res, 400, { ok: false, error: "missing agent" });
+        const num = (v) => (v === undefined || v === null || Number.isNaN(Number(v)) ? 0 : Number(v));
+        const point = {
+          ts: new Date().toISOString(),
+          tokens: num(body.tokens),
+          waste: num(body.waste),
+          ctx_used: num(body.ctx_used),
+          ctx_max: num(body.ctx_max),
+          tool_calls: num(body.tool_calls),
+          dup_reads: num(body.dup_reads),
+          dup_runs: num(body.dup_runs),
+          big_outputs: num(body.big_outputs),
+          note: body.note ? String(body.note) : null,
+        };
+        addTelemetry(String(body.agent), point);
+        return send(res, 200, { ok: true, agent: body.agent, point, waste_pct: pct(point.waste, point.tokens), ctx_pct: point.ctx_max ? pct(point.ctx_used, point.ctx_max) : null });
+      }
+      if (route === "/api/telemetry" && req.method === "GET") {
+        const agent = url.searchParams.get("agent");
+        const db = readTelemetry();
+        return send(res, 200, { ok: true, agent, points: agent ? db.agents[agent] || [] : db.agents });
       }
       if (route === "/api/claims" && req.method === "GET") {
         const claims = readClaims();

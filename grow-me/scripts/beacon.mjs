@@ -8,6 +8,8 @@
  *   node scripts/beacon.mjs beat     --agent win-a
  *   node scripts/beacon.mjs watch    --agent win-a --every 30     # 保活心跳（前台循环）
  *   node scripts/beacon.mjs claim --agent win-a --claim "P1 完成，loss 8.61" --evidence "runs/p1-s1/train.log:100"
+ *   node scripts/beacon.mjs telemetry --agent win-a --tokens 84213 --waste 12040 \
+ *        --ctx-used 45120 --ctx-max 64000 --tool-calls 37 --dup-reads 3 --dup-runs 2 --big-outputs 1
  *   node scripts/beacon.mjs status                                # 看监测台里有哪些 agent
  * 全局：--console http://127.0.0.1:8176
  */
@@ -131,6 +133,23 @@ async function main() {
       console.log(JSON.stringify(out, null, 2));
       return;
     }
+    case "telemetry": {
+      const n = (v) => (v === undefined ? 0 : Number(v));
+      const out = await post(base, "/api/telemetry", {
+        agent: opts.agent || "unknown",
+        tokens: n(opts.tokens),
+        waste: n(opts.waste),
+        ctx_used: n(opts["ctx-used"]),
+        ctx_max: n(opts["ctx-max"]),
+        tool_calls: n(opts["tool-calls"]),
+        dup_reads: n(opts["dup-reads"]),
+        dup_runs: n(opts["dup-runs"]),
+        big_outputs: n(opts["big-outputs"]),
+        note: opts.note || null,
+      });
+      console.log(JSON.stringify(out, null, 2));
+      return;
+    }
     case "status": {
       const out = await get(base, "/api/agents");
       console.log(JSON.stringify(out, null, 2));
@@ -140,7 +159,7 @@ async function main() {
       console.log(JSON.stringify({
         ok: false,
         error: "unknown command",
-        commands: ["register", "beat", "watch", "claim", "status"],
+        commands: ["register", "beat", "watch", "claim", "telemetry", "status"],
         console: base,
         detected_skill: skill,
       }, null, 2));

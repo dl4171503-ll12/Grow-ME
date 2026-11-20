@@ -29,11 +29,17 @@ node scripts/beacon.mjs watch --agent win-a --every 30
 # 3) 上报声明与证据（这就是"说谎检查"的数据源）
 node scripts/beacon.mjs claim --agent win-a --claim "P1-S1 完成，loss 8.61" --evidence "runs/p1-s1/train.log:100"
 
-# 4) 看监测台里都有谁
+# 4) 上报实时消耗（说谎程度之外的"浪费"维度；建议每 ~10 次工具调用或每 5 分钟一次）
+node scripts/beacon.mjs telemetry --agent win-a --tokens 84213 --waste 12040 `
+  --ctx-used 45120 --ctx-max 64000 --tool-calls 37 --dup-reads 3 --dup-runs 2 --big-outputs 1
+
+# 5) 看监测台里都有谁
 node scripts/beacon.mjs status
 ```
 
-定位仪上报的内容：agent 名、模型名、工作目录、PID、**技能版本与安装路径**、心跳时间。
+定位仪上报的内容：agent 名、模型名、工作目录、PID、**技能版本与安装路径**、心跳时间；
+telemetry 额外上报：累计 tokens、浪费 tokens、上下文已用/上限、工具调用数、重复读/重复跑/超大输出次数。
+
 监测台据此判断：
 
 | 判断 | 规则 |
@@ -41,17 +47,30 @@ node scripts/beacon.mjs status
 | 在线 / 离线 | 最后心跳 < 90 秒 = 在线 |
 | 持证 / 未持证 | 上报了 `skill_version`（且非 unknown）= 持证 |
 | 版本一致 | 与监测台所在技能的版本比对，不一致标黄"版本不符" |
-| 证据通过率 | 该 agent 的 claim 里，有 evidence 的比例 |
+| **说谎程度** | 该 agent 未验证声明 ÷ 声明总数（≥30% 标红） |
+| **浪费率** | 浪费 tokens ÷ 累计 tokens（≥20% 标红） |
+| **上下文占用** | ctx_used ÷ ctx_max（≥85% 标红，65~85% 标黄） |
 
 > **持证才干活**：装了 grow-me 且版本一致的 AI 才标绿；未持证的 AI 不得代表 skill 交付。
-> 判据不是它自称，而是它能不能报出自己的技能版本 + 每条声明有没有证据。
+> 判据不是它自称，而是它能不能报出自己的技能版本 + 每条声明有没有证据 + 消耗是否合理。
 
-## 三个面板
+**浪费 tokens 怎么算**：重复读同一文件、重复跑同一命令、把大段输出贴回上下文、非必要验证——
+这些操作消耗的 token 记进 `--waste`。上报是自报，但监测台会把它和"重复读/重复跑/超大输出"次数并列显示，
+自报和计数对不上就是可疑。
+
+## 四个面板
 
 ### 1) 定位仪（谁在干活 / 是否持证）
 
 - 在线状态、模型、技能版本（绿=持证、黄=版本不符、红=未持证）、工作目录、最后心跳、证据通过率。
 - 空表提示：`node scripts/beacon.mjs register --agent <id> --model <name>`。
+
+### 1.5) 实时消耗 / 说谎程度（谁在烧 token、谁在糊弄）
+
+- 每行一个 agent：**说谎程度**（未验证声明占比）、**上下文占用**（进度条 + 已用/上限）、
+  **累计 tokens**、**浪费 tokens（%）**、工具调用、**重复读/重复跑/超大输出**次数、标记（上下文将满/浪费高/说谎率高）。
+- 顶部徽章：全局说谎率、全局浪费率（所有 agent 的浪费 tokens ÷ 累计 tokens）。
+- 数据来源：`beacon.mjs telemetry` 上报 + `/api/telemetry`；历史保留最近 240 个点。
 
 ### 2) 证据台账（说谎检查）
 
@@ -80,6 +99,7 @@ node scripts/beacon.mjs status
 | GET | `/api/ai` | 重新扫描本机 AI |
 | GET | `/api/agents` | 定位仪列表（在线、持证、心跳、证据统计） |
 | POST | `/api/beacon` | 定位仪报到/心跳 |
+| POST/GET | `/api/telemetry` | 上报实时消耗 / 查询历史点（`?agent=<id>`） |
 | GET/POST | `/api/claims` | 读台账 / 登记声明+证据 |
 | GET | `/api/loss` | loss 点 + 统计 + 配置 |
 | POST | `/api/loss/config` | 改瞎猜线 / 目标区间 |
