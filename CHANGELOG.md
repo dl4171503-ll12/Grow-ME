@@ -3,6 +3,15 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.7.1 — 定位仪区分「使用技能 / 仅绑定」
+
+- `beacon.mjs register` 新增 `--skill-used true|false`：显式声明该 AI 是否真的在用技能工作。
+- 监测台「定位仪」面板新增「用法」列：使用技能（绿）/ 仅绑定（黄）/ 未上报（灰）。
+- 起因：A/B 对照实验里 Agent B 只绑定控制台、不读技能，但 beacon 仍会自动读取本机安装版本，
+  导致两个 agent 都显示"持证"；加字段后可区分"机器装了技能"与"这个 AI 真的在用技能"。
+- 同场实测：A（带 skill）与 B（无 skill）在 10 项裁判检查中均 10/10；A 多出工作记录/日志/9 个测试，
+  但自报 tokens 64k vs B 10k。
+
 ## V1.7.0 — 说谎程度 + 上下文/token 浪费实时监测
 
 - 定位仪新增 `telemetry`：累计 tokens、浪费 tokens、上下文已用/上限、工具调用、重复读/重复跑/超大输出。

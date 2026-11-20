@@ -90,6 +90,8 @@ function payload(opts, skill) {
     pid: process.pid,
     skill_version: skill.version,
     skill_path: skill.path,
+    // 是否真的在用技能工作（仅声明，监测台据此区分"使用技能"与"仅绑定"）
+    skill_used: opts["skill-used"] === "false" ? false : opts["skill-used"] === "true" ? true : null,
     ts: new Date().toISOString(),
   };
 }

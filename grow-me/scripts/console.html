@@ -56,7 +56,7 @@
     <h2>定位仪（谁在干活 / 是否持证） <small id="agentSum"></small></h2>
     <div class="fit">
       <table id="agentTable">
-        <thead><tr><th>Agent</th><th>状态</th><th>模型</th><th>技能版本</th><th>工作目录</th><th>最后心跳</th><th>证据</th></tr></thead>
+        <thead><tr><th>Agent</th><th>状态</th><th>模型</th><th>技能版本</th><th>用法</th><th>工作目录</th><th>最后心跳</th><th>证据</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -207,6 +207,7 @@ async function refresh() {
       <td class="${a.online ? "ok" : "dim"}">${a.online ? "在线" : "离线"}</td>
       <td class="dim">${esc(a.model || "-")}</td>
       <td class="${a.version_match ? "ok" : a.licensed ? "warn" : "bad"}">${esc(a.skill_version || "无")}${a.licensed ? (a.version_match ? " 持证" : " 版本不符") : " 未持证"}</td>
+      <td>${a.skill_used === true ? '<span class="ok">使用技能</span>' : a.skill_used === false ? '<span class="warn">仅绑定</span>' : '<span class="dim">未上报</span>'}</td>
       <td class="dim">${esc(a.cwd || "-")}</td>
       <td class="dim">${ago(a.last_seen)}（${a.beats} 次）</td>
       <td><span class="ok">${a.claims.verified}</span> / <span class="bad">${a.claims.unverified}</span> 未验证</td>
