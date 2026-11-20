@@ -2,19 +2,20 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
-<title>Grow Me 控制台</title>
+<title>Grow Me 监测台</title>
 <style>
   :root { --bg:#0f1115; --panel:#171a21; --line:#2a2f3a; --text:#e6e8ee; --dim:#9aa3b2; --ok:#3ddc84; --warn:#ffb020; --bad:#ff5c5c; --accent:#6aa8ff; }
-  * { box-sizing: border-box; }
+  * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 "Segoe UI",system-ui,sans-serif; }
-  header { position:sticky; top:0; z-index:5; display:flex; gap:16px; align-items:center; padding:14px 20px; background:#12151b; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header { position:sticky; top:0; z-index:5; display:flex; gap:12px; align-items:center; padding:12px 20px; background:#12151b; border-bottom:1px solid var(--line); flex-wrap:wrap; }
   h1 { margin:0; font-size:17px; }
   .badge { padding:2px 8px; border-radius:999px; background:#222834; color:var(--dim); font-size:12px; }
   .badge.ok { color:#08210f; background:var(--ok); }
   .badge.warn { color:#2b1d00; background:var(--warn); }
-  main { display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:16px 20px 40px; }
+  .badge.bad { color:#2b0000; background:var(--bad); }
+  main { display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:16px 20px 40px; }
   section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; min-width:0; }
-  section.wide { grid-column:1 / -1; }
+  section.wide { grid-column:1/-1; }
   h2 { margin:0 0 10px; font-size:15px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
   h2 small { color:var(--dim); font-weight:400; }
   table { width:100%; border-collapse:collapse; font-size:13px; }
@@ -31,22 +32,38 @@
   svg { width:100%; height:auto; background:#0c0f14; border-radius:10px; border:1px solid var(--line); }
   .legend { display:flex; gap:14px; color:var(--dim); font-size:12px; flex-wrap:wrap; }
   .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
-  .fit { max-height:320px; overflow:auto; }
+  .fit { max-height:300px; overflow:auto; }
   footer { color:var(--dim); font-size:12px; padding:0 20px 24px; }
+  code { color:#c8d3ea; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Grow Me 控制台</h1>
+  <h1>Grow Me 监测台</h1>
   <span class="badge" id="addr">连接中…</span>
-  <span class="badge" id="aiBadge">AI: -</span>
+  <span class="badge ok" id="mode">只读监测</span>
+  <span class="badge" id="beaconBadge">定位仪: -</span>
   <span class="badge" id="lieBadge">未验证声明: -</span>
-  <span class="badge" id="lossBadge">Loss: -</span>
+  <span class="badge" id="verBadge">技能版本: -</span>
   <button id="refresh">刷新</button>
   <span class="dim" id="ts"></span>
 </header>
 
 <main>
+  <section class="wide">
+    <h2>定位仪（谁在干活 / 是否持证） <small id="agentSum"></small></h2>
+    <div class="fit">
+      <table id="agentTable">
+        <thead><tr><th>Agent</th><th>状态</th><th>模型</th><th>技能版本</th><th>工作目录</th><th>最后心跳</th><th>证据</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <span class="dim">给一个 AI 装定位仪：</span>
+      <code>node scripts/beacon.mjs register --agent &lt;id&gt; --model &lt;name&gt;</code>
+    </div>
+  </section>
+
   <section class="wide">
     <h2>Loss 工作台 <small id="lossFile"></small></h2>
     <div class="stat">
@@ -81,12 +98,12 @@
   <section>
     <h2>证据台账（说谎检查） <small id="claimSum"></small></h2>
     <div class="row" style="margin-bottom:8px">
-      <input id="claimText" placeholder="AI 的声明，例如：已完成预训练，loss 2.4" style="flex:2" />
+      <input id="claimText" placeholder="AI 的声明，例如：预训练完成，loss 2.4" style="flex:2" />
       <input id="claimEvidence" placeholder="证据（命令输出 / 路径:行号），留空=未验证" style="flex:2" />
       <button class="primary" id="addClaim">登记</button>
     </div>
     <div class="fit">
-      <table id="claimTable"><thead><tr><th>时间</th><th>声明</th><th>证据</th><th>判定</th></tr></thead><tbody></tbody></table>
+      <table id="claimTable"><thead><tr><th>时间</th><th>来源</th><th>声明</th><th>证据</th><th>判定</th></tr></thead><tbody></tbody></table>
     </div>
   </section>
 
@@ -99,13 +116,20 @@
 </main>
 
 <footer>
-  grow-me 控制台 · 端口 8176（占用会自动顺延）· 数据目录 <code id="stateRoot"></code>
+  grow-me 监测台 · 只读观察，不控制任何 AI · 端口 8176（占用自动顺延）· 数据目录 <code id="stateRoot"></code>
 </footer>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const fmt = (n, d = 3) => (n === null || n === undefined ? "-" : Number(n).toFixed(d));
+const ago = (iso) => {
+  if (!iso) return "-";
+  const s = Math.round((Date.now() - Date.parse(iso)) / 1000);
+  if (s < 60) return s + " 秒前";
+  if (s < 3600) return Math.round(s / 60) + " 分钟前";
+  return Math.round(s / 3600) + " 小时前";
+};
 
 function drawChart(loss) {
   const svg = $("chart");
@@ -118,18 +142,14 @@ function drawChart(loss) {
   const x = (s) => pad.l + ((s - minStep) / Math.max(1, maxStep - minStep)) * (W - pad.l - pad.r);
   const y = (v) => pad.t + (1 - v / maxLoss) * (H - pad.t - pad.b);
   let out = "";
-  // 目标带
   out += `<rect x="${pad.l}" y="${y(cfg.targetHigh)}" width="${W - pad.l - pad.r}" height="${Math.max(1, y(cfg.targetLow) - y(cfg.targetHigh))}" fill="rgba(61,220,132,.14)" />`;
-  // y 轴刻度
   for (let i = 0; i <= 5; i++) {
     const v = (maxLoss / 5) * i;
     out += `<line x1="${pad.l}" y1="${y(v)}" x2="${W - pad.r}" y2="${y(v)}" stroke="#20242e" />`;
     out += `<text x="${pad.l - 8}" y="${y(v) + 4}" fill="#9aa3b2" font-size="11" text-anchor="end">${v.toFixed(1)}</text>`;
   }
-  // 瞎猜线
   out += `<line x1="${pad.l}" y1="${y(cfg.line)}" x2="${W - pad.r}" y2="${y(cfg.line)}" stroke="#ff5c5c" stroke-dasharray="6 4" />`;
   out += `<text x="${W - pad.r - 4}" y="${y(cfg.line) - 6}" fill="#ff5c5c" font-size="11" text-anchor="end">瞎猜线 ${cfg.line}</text>`;
-  // 阶段边界
   let lastPhase = null;
   for (const p of pts) {
     if (p.phase !== null && p.phase !== lastPhase) {
@@ -138,7 +158,6 @@ function drawChart(loss) {
       out += `<text x="${x(p.step) + 3}" y="${pad.t + 12}" fill="#ffb020" font-size="10">P${p.phase}</text>`;
     }
   }
-  // 曲线
   if (pts.length) {
     const d = pts.map((p, i) => `${i ? "L" : "M"}${x(p.step).toFixed(1)},${y(p.loss).toFixed(1)}`).join(" ");
     out += `<path d="${d}" fill="none" stroke="#6aa8ff" stroke-width="2" />`;
@@ -158,25 +177,45 @@ async function refresh() {
   $("addr").textContent = `http://127.0.0.1:${s.port}`;
   $("ts").textContent = "更新于 " + new Date().toLocaleTimeString();
   $("stateRoot").textContent = s.root;
+  $("verBadge").textContent = "技能版本: " + (s.expected_version || "?");
+  $("verBadge").className = "badge " + (s.expected_version && s.expected_version !== "unknown" ? "ok" : "warn");
 
-  // AI
+  // 定位仪
+  const b = s.beacons || { agents: [], summary: {}, expected_version: s.expected_version };
+  $("beaconBadge").textContent = `定位仪: ${b.summary.total || 0} 个（在线 ${b.summary.online || 0}，持证 ${b.summary.licensed || 0}）`;
+  $("beaconBadge").className = "badge " + ((b.summary.online || 0) > 0 ? "ok" : "warn");
+  $("agentSum").textContent = `期望版本 ${b.expected_version} · 心跳超时 ${Math.round((b.online_ms || 90000) / 1000)}s 判离线`;
+  $("agentTable").querySelector("tbody").innerHTML = (b.agents || []).map((a) => `
+    <tr>
+      <td>${esc(a.agent)}</td>
+      <td class="${a.online ? "ok" : "dim"}">${a.online ? "在线" : "离线"}</td>
+      <td class="dim">${esc(a.model || "-")}</td>
+      <td class="${a.version_match ? "ok" : a.licensed ? "warn" : "bad"}">${esc(a.skill_version || "无")}${a.licensed ? (a.version_match ? " 持证" : " 版本不符") : " 未持证"}</td>
+      <td class="dim">${esc(a.cwd || "-")}</td>
+      <td class="dim">${ago(a.last_seen)}（${a.beats} 次）</td>
+      <td><span class="ok">${a.claims.verified}</span> / <span class="bad">${a.claims.unverified}</span> 未验证</td>
+    </tr>`).join("") || `<tr><td colspan="7" class="dim">还没有 AI 报到。装定位仪：node scripts/beacon.mjs register --agent &lt;id&gt; --model &lt;name&gt;</td></tr>`;
+
+  // AI 扫描
   const ai = s.ai || { ai: [], summary: {} };
-  $("aiBadge").textContent = `AI: ${ai.summary.total || 0} 个（运行 ${ai.summary.running || 0}）`;
   $("aiSum").textContent = `${ai.summary.total || 0} 个被发现 / ${ai.summary.withSkill || 0} 个装了 grow-me`;
   $("aiTable").querySelector("tbody").innerHTML = (ai.ai || []).map((a) => `
     <tr><td>${esc(a.name)}</td><td class="dim">${esc(a.kind)}</td>
     <td class="${a.running ? "ok" : "dim"}">${a.running ? "是" : "否"}</td>
     <td class="${a.skillInstalled ? "ok" : "warn"}">${a.skillInstalled ? "是" : "否"}</td>
-    <td class="dim">${esc(a.evidence.join(" · "))}</td></tr>`).join("") || `<tr><td colspan="5" class="dim">未发现已知 AI 客户端（可检查 scripts/scan-ai.mjs 的 KNOWN 列表）</td></tr>`;
+    <td class="dim">${esc(a.evidence.join(" · "))}</td></tr>`).join("") || `<tr><td colspan="5" class="dim">未发现已知 AI 客户端</td></tr>`;
 
   // 证据台账
   const claims = s.claims || { items: [], summary: {} };
   $("lieBadge").textContent = `未验证声明: ${claims.summary.unverified || 0}`;
+  $("lieBadge").className = "badge " + ((claims.summary.unverified || 0) > 0 ? "bad" : "ok");
   $("claimSum").textContent = `共 ${claims.summary.total || 0} 条 / 已核验 ${claims.summary.verified || 0} / 未验证 ${claims.summary.unverified || 0}`;
   $("claimTable").querySelector("tbody").innerHTML = (claims.items || []).slice().reverse().map((c) => `
-    <tr><td class="dim">${esc((c.created_at || "").slice(11, 19))}</td><td>${esc(c.claim)}</td>
+    <tr><td class="dim">${esc((c.created_at || "").slice(11, 19))}</td>
+    <td class="dim">${esc(c.agent || "console")}${c.source === "beacon" ? "（定位仪）" : ""}</td>
+    <td>${esc(c.claim)}</td>
     <td class="dim">${c.evidence ? esc(c.evidence) : "（空）"}</td>
-    <td class="${c.evidence ? "ok" : "bad"}">${c.evidence ? "已核验" : "未验证"}</td></tr>`).join("") || `<tr><td colspan="4" class="dim">还没有登记。AI 说"完成了"就该在这里留下证据。</td></tr>`;
+    <td class="${c.evidence ? "ok" : "bad"}">${c.evidence ? "已核验" : "未验证"}</td></tr>`).join("") || `<tr><td colspan="5" class="dim">还没有登记。AI 说"完成了"就该在这里留下证据。</td></tr>`;
 
   // loss
   const loss = s.loss || {};
@@ -186,8 +225,6 @@ async function refresh() {
   $("sMin").textContent = loss.stats ? fmt(loss.stats.min) : "-";
   $("sLine").textContent = loss.config ? loss.config.line : "8.76";
   $("sTarget").textContent = loss.config ? `${loss.config.targetLow} ~ ${loss.config.targetHigh}` : "2 ~ 3";
-  $("lossBadge").textContent = loss.stats ? (loss.stats.inTarget ? "已到目标区间" : loss.stats.belowLine ? "低于瞎猜线" : "仍高于瞎猜线") : "Loss: 无数据";
-  $("lossBadge").className = "badge " + (loss.stats && loss.stats.belowLine ? "ok" : loss.stats ? "warn" : "");
   if (loss.config) { $("cfgLine").value = loss.config.line; $("cfgLow").value = loss.config.targetLow; $("cfgHigh").value = loss.config.targetHigh; }
   drawChart(loss);
 
@@ -207,7 +244,7 @@ $("saveCfg").onclick = async () => {
 $("addClaim").onclick = async () => {
   const claim = $("claimText").value.trim();
   if (!claim) return;
-  await fetch("/api/claims", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ claim, evidence: $("claimEvidence").value.trim() }) });
+  await fetch("/api/claims", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ claim, evidence: $("claimEvidence").value.trim(), agent: "console" }) });
   $("claimText").value = ""; $("claimEvidence").value = "";
   refresh();
 };

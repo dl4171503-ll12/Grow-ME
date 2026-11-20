@@ -7,15 +7,15 @@ description: >-
   不没跑就说通过、不缩范围），又省 token（不乱翻上下文、不重复读文件、长输出外置、达标即停）。
   当用户说"grow me""别偷懒""省积分""追问我""先追问再开工""五维工程""自动化测试几轮""自己迭代到能用"，
   或任务涉及多步实现、改造、迁移、调试、搭自动化、写报告、多 agent / 多窗口协作与文档交接时使用；
-  接手后会先起本地控制台（默认端口 8176）并扫描本机已装 AI。本 skill 装上后，即使没点名，动代码/跑命令前也应遵守本协议。
+  接手后会先起本地监测台（默认端口 8176）、扫描本机已装 AI，并用定位仪上报心跳与证据。本 skill 装上后，即使没点名，动代码/跑命令前也应遵守本协议。
 license: MIT
 metadata:
-  version: V1.5.0
+  version: V1.6.0
   kind: policy
   maturity: stable
 ---
 
-# Grow Me — V1.5.0
+# Grow Me — V1.6.0
 
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 常驻模式：装上即对所有动手类任务生效，不必每次点名。
@@ -163,21 +163,24 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 - 安全：只绑 127.0.0.1；消息不放密钥；客户端发 UTF-8
 - 五要素模板、生命周期、故障排查：[references/agent-bus.md](references/agent-bus.md)
 
-## 9. 规则九：接管与控制台（端口 8176）
+## 9. 规则九：监测台与定位仪（8176，只读）
 
-**接手本 skill 后立刻做三件事**（不等用户点名）：
+**只监测，不控制。** 接手本 skill 后立刻做四件事（不等用户点名）：
 
-1. **起控制台**：`node scripts/console.mjs`（默认 `127.0.0.1:8176`；被占用自动 +1 找空闲端口，
-   实际端口见 `~/.grow-me/console/runtime.json`），把 URL 告诉用户。控制台是可核查面：
-   本机 AI 扫描 / 证据台账 / Loss 工作台 / 模型备份清单。
-2. **扫描本机 AI**：`GET /api/ai` 列出已装或在跑的 AI 客户端，并标注**哪些装了 grow-me**（可控制面）；
+1. **起监测台**：`node scripts/console.mjs`（默认 `127.0.0.1:8176`；被占用自动 +1 找空闲端口，
+   实际端口见 `~/.grow-me/console/runtime.json`），把 URL 告诉用户。它只读：本机 AI 扫描 / 定位仪 /
+   证据台账 / Loss 工作台 / 模型备份清单，**不远程操作任何 AI**。
+2. **扫描本机 AI**：`GET /api/ai` 列出已装或在跑的 AI 客户端，并标注**哪些装了 grow-me**；
    检测规则在 `scripts/scan-ai.mjs` 的 `KNOWN`，遇到新 AI 加一条即可。
-3. **一切"已完成"进证据台账**：`POST /api/claims {claim,evidence}`。**没有证据的声明 = 未验证 = 视同说谎**，
-   面板会标红"未验证 N 条"。训练类任务把 loss 写进 `.grow-me/loss/loss.csv`，工作台自动画曲线、
-   瞎猜线（默认 8.76）、目标区间（默认 2~3）；要压 loss 就在 `POST /api/loss/config` 改阈值。
+3. **给自己装定位仪**：`node scripts/beacon.mjs register --agent <id> --model <name>`；
+   之后每条声明用 `beacon.mjs claim --claim "..." --evidence "..."` 上报；长任务用 `watch --every 30` 保活心跳。
+   监测台按心跳判**在线/离线**，按 `skill_version` 判**持证/未持证**。
+4. **持证才干活**：装了 grow-me 且版本一致 = 持证（绿）；没装 = 未持证（红）——**未持证的 AI 不得代表我交付**。
+   监测台只看两件事：**谁在线**、**它的话有多少条有证据**（未验证 = 视同说谎）。
 
-- 安全：只绑 `127.0.0.1`，不对外；台账与配置落 `~/.grow-me/console/`。
-- 接口字段：[references/console.md](references/console.md)；minmind 六阶段训练规范：
+- 训练类任务把 loss 写进 `.grow-me/loss/loss.csv`：工作台画曲线、瞎猜线 8.76、目标区间 2~3（可改）。
+- 安全：只绑 `127.0.0.1`，不对外；台账/定位仪数据落 `~/.grow-me/console/`。
+- 接口字段：[references/console.md](references/console.md)；minmind 训练规范：
   [references/minmind-training.md](references/minmind-training.md)
 
 ## 10. 红线
@@ -195,7 +198,7 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 - [ ] 收尾尾巴五段齐全 + 记录路径
 - [ ] 若走了自动轮次：每轮有 round 文件、最后有轮次汇总表，且不是"假轮次"（只改措辞不修实体）
 - [ ] 跨 agent 协作：消息有 id + 五要素，文档给的是路径+摘要，关键消息有 ack 证据（没 ack 不算完成）
-- [ ] 接手时已起控制台并告知端口；`/api/status` 能返回 AI 扫描与证据台账数据
+- [ ] 接手时已起监测台并给自己装了定位仪（`beacon.mjs register`）；`/api/agents` 能看到自己在线的证据
 
 ## 参考文件
 
@@ -209,5 +212,6 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 - [references/minmind-training.md](references/minmind-training.md) — minmind 预训练工作台：6 阶段 × 3 子阶段、checkpoint、8.76 瞎猜线、概念解释
 - [references/sources.md](references/sources.md) — 来源、致谢、版本记录
 - `scripts/validate-skill.mjs` — 自校验：`node scripts/validate-skill.mjs`
-- `scripts/console.mjs` + `scripts/scan-ai.mjs` + `scripts/console.html` — 接管控制台与本机 AI 扫描
+- `scripts/console.mjs` + `scripts/scan-ai.mjs` + `scripts/console.html` — 监测台（只读）与本机 AI 扫描
+- `scripts/beacon.mjs` — 定位仪：AI 报到/心跳/上报声明与证据
 - 版本发布：**仓库根目录**的 `RELEASE.md` 与 `scripts/release.ps1` —— **发布新版本第一步 = 先推 GitHub 仓库 `dl4171503-ll12/Grow-ME`**，再更新本机安装副本（本机安装目录只有技能本体，没有仓库级文件，属正常）

@@ -3,7 +3,7 @@
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 一个「常驻工作协议」技能：装上即对所有动手类任务生效，不必每次点名。
 
-- 当前版本：**V1.5.0**（见 [CHANGELOG.md](CHANGELOG.md)）
+- 当前版本：**V1.6.0**（见 [CHANGELOG.md](CHANGELOG.md)）
 - 许可：[MIT](LICENSE)
 - 技能本体：[`grow-me/`](grow-me/)（`SKILL.md` + `references/` + `scripts/` + `evals/`）
 
@@ -16,7 +16,7 @@
 | 上下文被翻烂、token 烧光 | 规则一 自动落盘 + 规则二 上下文纪律 |
 | 一轮就交，bug 留给用户 | 规则七 自动测试轮次（提交给自己 → 自审 → 自试 → 择优修） |
 | 多个窗口各写各的、文档没人看 | 规则八 多 Agent 总线（Webhook + 回执 + 催办） |
-| 不知道 AI 有没有在说谎、训练 loss 卡住 | 规则九 接管控制台（8176 端口 + 证据台账 + Loss 工作台） |
+| 不知道 AI 有没有在说谎、训练 loss 卡住 | 规则九 只读监测台（8176 + 定位仪 + 证据台账 + Loss 工作台） |
 
 ## 九条规则
 
@@ -28,7 +28,7 @@
 6. **证据收尾**：进度图 / 本轮 / 证据 / 下一步 / 阻塞 + 记录路径；达标即停。
 7. **自动测试轮次**：用户说"可以自动化测试几轮"即放行，跑 N 轮自提交-自审-自试；用户插话立即停并落盘。
 8. **多 Agent 总线**：`send / inbox / read / ack / pending / nudge / verify / wait`，文档只传路径+sha1+摘要，没 ack 不算完成。
-9. **接管与控制台**：接手后立刻起本地控制台（默认 `127.0.0.1:8176`，占用自动 +1）→ 扫描本机 AI → 一切"已完成"进证据台账；Loss 工作台标注瞎猜线 8.76 与目标区间 2~3。
+9. **监测台与定位仪**：接手后立刻起只读监测台（默认 `127.0.0.1:8176`，占用自动 +1）→ 扫描本机 AI → 给自己装定位仪（`beacon.mjs`）上报心跳与证据；**只观察"谁在线、它的话有多少条有证据"，不控制任何 AI**。持证 = 装了 grow-me 且版本一致。
 
 ## 安装
 
@@ -80,21 +80,25 @@ node grow-me/scripts/bus.mjs ack --id <id> --by win-b --note "同意，补充：
 
 数据默认在 `~/.grow-me/bus`，端口 `127.0.0.1:8787`（被占用自动 +1，实际端口见 `runtime.json`）。
 
-## 接管控制台（规则九）
+## 监测台与定位仪（规则九，只读）
 
-接手 skill 后自动做三件事：起控制台、扫本机 AI、把"已完成"写成证据。
+接手 skill 后自动做四件事：起监测台、扫本机 AI、装定位仪、把"已完成"写成证据。
+**监测台只读观察，不控制任何 AI。**
 
 ```powershell
-node grow-me/scripts/console.mjs    # 默认 127.0.0.1:8176，被占自动 +1；端口见 ~/.grow-me/console/runtime.json
-node grow-me/scripts/scan-ai.mjs    # 只看扫描结果（JSON）
+node grow-me/scripts/console.mjs            # 默认 127.0.0.1:8176，被占自动 +1；端口见 ~/.grow-me/console/runtime.json
+node grow-me/scripts/scan-ai.mjs            # 只看扫描结果（JSON）
+node grow-me/scripts/beacon.mjs register --agent win-a --model deepseek-flash   # 装定位仪（报到）
+node grow-me/scripts/beacon.mjs watch --agent win-a --every 30                 # 保活心跳
+node grow-me/scripts/beacon.mjs claim --agent win-a --claim "P1 完成，loss 8.61" --evidence "runs/p1-s1/train.log:100"
 ```
 
-- 页面显示：**本机 AI 清单**（哪些装了 grow-me）、**证据台账**（无证据的声明标红"未验证"，即"说谎检查"）、
-  **Loss 工作台**（瞎猜线 8.76 / 目标区间 2~3 / 阶段边界 / 曲线）、**模型备份清单**。
+- 页面四个面板：**定位仪**（谁在线、技能版本、持证/未持证、证据通过率）、**AI 扫描**（哪些装了 grow-me）、
+  **证据台账**（无证据 = 未验证 = 视同说谎，顶部红色计数）、**Loss 工作台**（瞎猜线 8.76 / 目标 2~3 / 备份清单）。
+- **持证才干活**：装了 grow-me 且版本一致 = 绿；未持证 = 红，不得代表 skill 交付。
 - 训练任务把 `step,loss,phase,sub` 写进 `.grow-me/loss/loss.csv`，工作台自动画曲线；
   minmind 预训练按 [`grow-me/references/minmind-training.md`](grow-me/references/minmind-training.md) 的
   6 阶段 × 3 子阶段规范执行，每段结束存 `runs/pX-sY/`。
-- 想看 AI 有没有吹牛：它说"已完成"，就查台账里有没有 `evidence`；没有 = 未验证。
 
 ## 自动测试轮次（规则七）
 
@@ -107,8 +111,8 @@ node grow-me/scripts/scan-ai.mjs    # 只看扫描结果（JSON）
 Grow-ME/
 ├── grow-me/                  # 技能本体（复制这个目录到 ~/.agents/skills/）
 │   ├── SKILL.md
-│   ├── references/           # 追问/五维/落盘/轮次/总线/控制台/训练/来源
-│   ├── scripts/              # console.mjs 控制台、scan-ai.mjs 扫描、bus.mjs 总线、validate-skill.mjs 校验
+│   ├── references/           # 追问/五维/落盘/轮次/总线/监测台/训练/来源
+│   ├── scripts/              # console.mjs 监测台、beacon.mjs 定位仪、scan-ai.mjs 扫描、bus.mjs 总线、validate-skill.mjs 校验
 │   ├── evals/evals.json      # 回归用例
 │   └── LICENSE
 ├── scripts/                  # 仓库级工具（发布、打包）
@@ -121,7 +125,7 @@ Grow-ME/
 **发布新版本的第一件事：先更新本仓库，再更新本机安装副本。**
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/release.ps1 -Version V1.5.1
+powershell -ExecutionPolicy Bypass -File scripts/release.ps1 -Version V1.6.1
 ```
 
 脚本会：校验 `VERSION` 与 `SKILL.md` 一致 → 跑 `validate-skill.mjs` → 提交 → 打 tag → **推送仓库** → 提示同步本机副本。完整清单见 [RELEASE.md](RELEASE.md)。
