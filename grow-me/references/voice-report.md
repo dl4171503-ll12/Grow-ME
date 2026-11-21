@@ -99,3 +99,5 @@ powershell -File scripts/voice-notify.ps1 -File x.txt -Voice zh-CN-YunxiNeural -
 
 - 播报失败只写一行日志，不影响任务完成判定；不要把"播报失败"当阻塞上报。
 - 同一任务重复完成只播一次（确认收尾前只调一次）。
+- **听不见时先体检**：`powershell -File scripts/audio-env.ps1` 看默认播放设备/系统音量/静音；
+  音量太低就 `-SetVolume -Level 0.85 -Unmute`（本机曾因系统音量仅 22% 导致“念了但听不见”）。

@@ -3,6 +3,11 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.9.6 — 排查“听不见”：系统音量仅 22%
+
+- 新增 `scripts/audio-env.ps1`（CoreAudio）：读默认播放设备/系统音量/静音，可 `-SetVolume -Level 0.85 -Unmute` 直接调整。
+- 实测默认设备 `扬声器 (Senary Audio)`、volume 22% → 调到 85% 后 youth 语音清晰可听。
+
 ## V1.9.5 — youth 响度修正（音量 +30% + 峰值归一化）
 
 - 用户反馈声音太小；`youth` 预设音量改 +30%，并对合成波形做峰值归一化到 -1 dBFS（`-Normalize` 自动生效）。

@@ -10,12 +10,12 @@ description: >-
   接手后会先起本地监测台（默认端口 8176）、扫描本机已装 AI，并用定位仪上报心跳与证据。本 skill 装上后，即使没点名，动代码/跑命令前也应遵守本协议。
 license: MIT
 metadata:
-  version: V1.9.5
+  version: V1.9.6
   kind: policy
   maturity: stable
 ---
 
-# Grow Me — V1.9.5
+# Grow Me — V1.9.6
 
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 常驻模式：装上即对所有动手类任务生效，不必每次点名。
@@ -249,6 +249,7 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 - [references/voice-report.md](references/voice-report.md) — 任务完成语音播报：白话摘要模板、前台感知、Edge/离线回退、调参
 - `scripts/voice-edge-tts.ps1` — Edge 神经语音（在线免 Key）合成与播放
 - `scripts/voice-notify.ps1` — 任务完成播报（白话摘要 + 前台检测 + 自动重复）
+- `scripts/audio-env.ps1` — 音频环境体检：默认播放设备/系统音量/静音，可 `-SetVolume -Level 0.85 -Unmute` 直接调
 - `vendor/livekit-agents/` — 上游源码与语音示例（Apache-2.0，含 `SOURCE.md`/`LICENSE`/`NOTICE`）
 - `scripts/voice-agent.mjs` — 本地语音 Agent 运行时（demo / run / serve）
 - [references/sources.md](references/sources.md) — 来源、致谢、版本记录

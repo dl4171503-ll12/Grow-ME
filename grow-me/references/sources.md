@@ -32,6 +32,10 @@
 
 ## 版本记录
 
+### V1.9.6（排查“听不见”：系统音量仅 22%）
+- 新增 `scripts/audio-env.ps1`：用 CoreAudio（IMMDeviceEnumerator/IAudioEndpointVolume）读取默认播放设备名、系统音量与静音状态，并可用 `-SetVolume -Level 0.85 -Unmute` 直接调整（无需外部依赖）。
+- 实测：默认设备 `扬声器 (Senary Audio)`、**volume=22%**、mute=False → 调到 **85%** 后 youth 语音可清晰听到。
+
 ### V1.9.5（youth 响度修正：音量 +30% + 峰值归一化）
 - 用户反馈“声音太小”；`youth` 预设音量改 **+30%**，并对合成波形做**峰值归一化到 -1 dBFS**（`-Normalize` 自动对该预设生效，`-GainDb` 可再叠加增益）。
 - 实测同一句：峰值 32% → **90%**，RMS 1358 → **3277**（约 2.4 倍响度）。
