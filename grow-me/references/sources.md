@@ -32,6 +32,12 @@
 
 ## 版本记录
 
+### V1.9.0（任务完成语音播报 + Edge 神经语音）
+- 新增 `scripts/voice-edge-tts.ps1`：Edge 神经语音（`zh-CN-XiaoxiaoNeural` 等，在线免 Key），WPF 播放 MP3；支持 `-ListVoices/-Rate/-Pitch/-SaveMp3/-NoPlay`。
+- 新增 `scripts/voice-notify.ps1`：任务完成播报——读白话摘要文件（或 `-Text`）→ Edge 朗读 → 前台窗口检测（前台不是 DeepSeek Harness/DSH 时加"提醒："并重复 2 遍）；Edge 失败自动回退离线 Piper；JSON 回执 + `~/.grow-me/voice/notify.jsonl` 日志。
+- 新增规则十一「任务完成语音播报（白话摘要 + 前台感知）」，红线/自检顺延为十二/十三；新增 `references/voice-report.md`（白话模板与反例、调参）。
+- 实测：后台场景 `foreground=false, repeats=2`；前台场景 `foreground=true, repeats=1`，Edge 合成 34–55KB MP3 可回放。
+
 ### V1.8.3（离线神经语音 + 中英混读修音）
 - 新增 `scripts/voice-piper-tts.ps1`：Piper 离线神经 TTS（`-Ensure` 自动从 hf-mirror 下模型；`-LengthScale` 调语速）。
 - 新增 `scripts/voice-hybrid-tts.ps1`：中英自动分流——中文 `zh_CN-huayan-medium` + 英文 `en_US-lessac-medium`，重采样拼接成单段 22050Hz WAV；修掉 "AI Agent 读成 爱爱进"。

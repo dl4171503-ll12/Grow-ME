@@ -3,6 +3,13 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.9.0 — 任务完成语音播报（白话摘要 + 前台感知 + Edge 神经语音）
+
+- 新增 `scripts/voice-edge-tts.ps1`：Edge 神经语音（zh-CN-XiaoxiaoNeural 等，在线免 Key），WPF 播放 MP3。
+- 新增 `scripts/voice-notify.ps1`：读白话摘要文件 → Edge 朗读 → 前台检测（不在 DeepSeek Harness/DSH 窗口时加“提醒：”并重复 2 遍）→ Edge 失败回退离线 Piper；JSON 回执 + `~/.grow-me/voice/notify.jsonl`。
+- 新增规则十一「任务完成语音播报」，红线/自检顺延为十二/十三；新增 `references/voice-report.md`。
+- 实测：后台 `foreground=false, repeats=2`；前台 `foreground=true, repeats=1`。
+
 ## V1.8.3 — 离线神经语音 + 中英混读修音
 
 - 新增 `scripts/voice-piper-tts.ps1`（Piper 离线神经 TTS，`-Ensure` 经 hf-mirror 下模型）与 `scripts/voice-hybrid-tts.ps1`（中文 huayan + 英文 lessac 自动分流、重采样拼接）。
