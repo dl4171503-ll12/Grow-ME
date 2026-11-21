@@ -32,6 +32,13 @@
 
 ## 版本记录
 
+### V1.8.0（实时语音 Agent：vendor LiveKit Agents + 本地等价运行时）
+- vendor 上游 `livekit/agents` 核心包与语音示例（Apache-2.0，`vendor/livekit-agents/`，`SOURCE.md` 记录 HEAD `d78f399…`）。
+- 新增 `scripts/voice-agent.mjs`：零依赖、无需 LiveKit 服务器的能力等价实现——AgentSession 生命周期、
+  轮次检测、打断、工具调用、插件化 STT/LLM/TTS（离线回退 + OpenAI 兼容）、事件钩子、转写与延迟指标、HTTP/SSE 服务。
+- 新增 `references/livekit-agents.md`：能力映射表、快速开始、上游生产级用法、明确边界（WebRTC/SIP/电话不复刻）。
+- SKILL.md 新增第 10 节「能力模块」，自检补语音模块检查。
+
 ### V1.7.1（定位仪区分"使用技能 / 仅绑定"）
 - 定位仪 `register` 新增 `--skill-used true|false`：显式声明这个 AI 是不是真的在用技能工作。
 - 监测台定位仪表格新增「用法」列：`使用技能`（绿）/ `仅绑定`（黄）/ `未上报`（灰）。

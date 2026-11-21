@@ -3,6 +3,14 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.8.0 — 实时语音 Agent（vendor LiveKit Agents + 本地等价运行时）
+
+- vendor 上游 `livekit/agents` 核心包与语音示例（Apache-2.0）：`grow-me/vendor/livekit-agents/`，`SOURCE.md` 记录来源与 HEAD `d78f399…`，保留 `LICENSE`/`NOTICE`/`MODEL_LICENSE`。
+- 新增 `grow-me/scripts/voice-agent.mjs`：零依赖、无需 LiveKit 服务器的能力等价实现——AgentSession 生命周期、轮次检测、打断(barge-in)、工具调用、插件化 STT/LLM/TTS（离线回退 + OpenAI 兼容）、事件钩子、转写与延迟指标、HTTP/SSE 服务（`demo` / `run` / `serve`）。
+- 新增 `grow-me/references/livekit-agents.md`：能力映射表、快速开始、上游生产级用法、明确边界（WebRTC/SIP/电话不复刻）。
+- `SKILL.md` 新增第 10 节「能力模块」并补自检项；README 增至十条规则。
+- 实测：`demo` 触发 `lookup_faq` 工具；`serve` 接口 `health/turn/transcript/events/interrupt` 全通，打断后下一轮正常。
+
 ## V1.7.1 — 定位仪区分「使用技能 / 仅绑定」
 
 - `beacon.mjs register` 新增 `--skill-used true|false`：显式声明该 AI 是否真的在用技能工作。

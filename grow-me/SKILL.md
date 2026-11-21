@@ -10,12 +10,12 @@ description: >-
   接手后会先起本地监测台（默认端口 8176）、扫描本机已装 AI，并用定位仪上报心跳与证据。本 skill 装上后，即使没点名，动代码/跑命令前也应遵守本协议。
 license: MIT
 metadata:
-  version: V1.7.1
+  version: V1.8.0
   kind: policy
   maturity: stable
 ---
 
-# Grow Me — V1.7.1
+# Grow Me — V1.8.0
 
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 常驻模式：装上即对所有动手类任务生效，不必每次点名。
@@ -188,13 +188,24 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 - 接口字段：[references/console.md](references/console.md)；minmind 训练规范：
   [references/minmind-training.md](references/minmind-training.md)
 
-## 10. 红线
+## 10. 能力模块：实时语音 Agent（对齐 LiveKit Agents）
+
+上游 `livekit/agents` 已 vendor 进 `vendor/livekit-agents/`（核心包 + 语音示例 + LICENSE/NOTICE，见 `SOURCE.md`）；
+本 skill 同时提供零依赖、无需 LiveKit 服务器的**能力等价**运行时：
+
+- `node scripts/voice-agent.mjs demo` — 命令行对话（内置前台 Agent，离线可用；`:i` 打断、`:q` 退出）
+- `node scripts/voice-agent.mjs serve --port 8180` — `POST /api/turn`、`GET /api/transcript`、`GET /api/events`(SSE)、`POST /api/interrupt`
+- 对齐：AgentSession 生命周期 / 轮次检测 / 打断(barge-in) / 工具调用 / 插件化 STT-LLM-TTS / 事件钩子 / 转写与延迟指标
+- 边界：不含 WebRTC/SIP/电话与真实音频编解码；生产级直接用上游 + LiveKit 服务器（`pip install livekit-agents`）
+- 能力映射与接真实模型的方法：[references/livekit-agents.md](references/livekit-agents.md)
+
+## 11. 红线
 
 **反偷懒**：不留 TODO/占位符/省略号；不把活推回用户；没跑过不说"通过"；不拿形容词当交付；不缩范围；发现更大问题只记录。
 
 **反空转（省积分）**：计划只写一次、不复述；不重复读文件、不重跑命令；单步思考只写结论；不加非必要验证；不为显得勤奋多跑命令。
 
-## 11. 说"完成"前自检
+## 12. 说"完成"前自检
 
 - [ ] `.grow-me/` 记录存在且七节齐全（至少：目标/事实/验证/下一步），头部有工作根与产物路径
 - [ ] 每条验收都有证据，且证据是真实命令输出或 `路径:行号`
@@ -204,6 +215,7 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 - [ ] 若走了自动轮次：每轮有 round 文件、最后有轮次汇总表，且不是"假轮次"（只改措辞不修实体）
 - [ ] 跨 agent 协作：消息有 id + 五要素，文档给的是路径+摘要，关键消息有 ack 证据（没 ack 不算完成）
 - [ ] 接手时已起监测台并给自己装了定位仪（`beacon.mjs register`）；`/api/agents` 能看到自己在线的证据
+- [ ] 若用到语音 Agent 模块：`demo` 或 `serve` 真跑过，事件流与转写里有真实记录
 
 ## 参考文件
 
@@ -215,6 +227,9 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 - [references/agent-bus.md](references/agent-bus.md) — 多 agent 总线：五要素、消息生命周期、文档交接、催办与故障排查
 - [references/console.md](references/console.md) — 控制台：8176 端口策略、API、证据台账、loss 工作台、备份清单
 - [references/minmind-training.md](references/minmind-training.md) — minmind 预训练工作台：6 阶段 × 3 子阶段、checkpoint、8.76 瞎猜线、概念解释
+- [references/livekit-agents.md](references/livekit-agents.md) — 实时语音 Agent：LiveKit Agents 能力映射、本地运行时用法、许可与边界
+- `vendor/livekit-agents/` — 上游源码与语音示例（Apache-2.0，含 `SOURCE.md`/`LICENSE`/`NOTICE`）
+- `scripts/voice-agent.mjs` — 本地语音 Agent 运行时（demo / run / serve）
 - [references/sources.md](references/sources.md) — 来源、致谢、版本记录
 - `scripts/validate-skill.mjs` — 自校验：`node scripts/validate-skill.mjs`
 - `scripts/console.mjs` + `scripts/scan-ai.mjs` + `scripts/console.html` — 监测台（只读）与本机 AI 扫描
