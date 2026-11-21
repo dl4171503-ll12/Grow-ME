@@ -24,7 +24,7 @@ $presets = [ordered]@{
   a     = @{ voice = 'zh-CN-XiaoxiaoNeural'; label = 'A Xiaoxiao (female, warm)'; rate = 0; pitch = 0; volume = 0 }
   b     = @{ voice = 'zh-CN-XiaoyiNeural';   label = 'B Xiaoyi (female, lively)'; rate = 0; pitch = 0; volume = 0 }
   c     = @{ voice = 'zh-CN-YunxiNeural';    label = 'C Yunxi (male, sunny, default)'; rate = 0; pitch = 0; volume = 0 }
-  youth = @{ voice = 'zh-CN-YunxiNeural';    label = 'Youth gentle male 16-18 (Yunxi +14Hz, -6% rate, -10% vol)'; rate = -6; pitch = 14; volume = -10 }
+  youth = @{ voice = 'zh-CN-YunxiNeural';    label = 'Youth gentle male 16-18 (Yunxi +8Hz, -2% rate, volume 0)'; rate = -2; pitch = 8; volume = 0 }
 }
 if ($ListPresets) {
   foreach ($k in $presets.Keys) { "{0} -> {1} | {2}" -f $k, $presets[$k].voice, $presets[$k].label }

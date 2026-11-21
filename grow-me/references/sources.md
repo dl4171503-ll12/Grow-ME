@@ -32,6 +32,10 @@
 
 ## 版本记录
 
+### V1.9.4（youth 青年音调音：不尖、音量正常）
+- 用户反馈原 youth（+14Hz/-6%/-10%）偏尖（像花栗鼠）、音量偏小；试听 N1–N4 后选定 N1。
+- `youth` 预设改为：`Yunxi` + 音调 **+8Hz**、语速 **-2%**、音量 **0%**（`voice-edge-tts.ps1` 与 `voice-notify.ps1` 同步）。
+
 ### V1.9.3（新增 youth 青年音预设：16–18 岁温柔开朗男声）
 - 用户试听 10 个候选后选定：`Yunxi` 底子 + 音调 +14Hz、语速 -6%、音量 -10%，命名为预设 `youth`。
 - `voice-edge-tts.ps1` / `voice-notify.ps1` 均支持 `-Preset youth`；`voice-edge-tts.ps1` 新增 `-Volume` 参数（正负号规范化）。

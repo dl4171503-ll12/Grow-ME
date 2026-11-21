@@ -26,7 +26,7 @@ $presetMap = @{
   a     = @{ voice = 'zh-CN-XiaoxiaoNeural'; rate = 0; pitch = 0; volume = 0 }
   b     = @{ voice = 'zh-CN-XiaoyiNeural';   rate = 0; pitch = 0; volume = 0 }
   c     = @{ voice = 'zh-CN-YunxiNeural';    rate = 0; pitch = 0; volume = 0 }
-  youth = @{ voice = 'zh-CN-YunxiNeural';    rate = -6; pitch = 14; volume = -10 }
+  youth = @{ voice = 'zh-CN-YunxiNeural';    rate = -2; pitch = 8; volume = 0 }
 }
 $effRate = $Rate
 $effPitch = $Pitch
