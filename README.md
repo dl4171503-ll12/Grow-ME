@@ -3,7 +3,7 @@
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 一个「常驻工作协议」技能：装上即对所有动手类任务生效，不必每次点名。
 
-- 当前版本：**V1.9.0**（见 [CHANGELOG.md](CHANGELOG.md)）
+- 当前版本：**V1.9.1**（见 [CHANGELOG.md](CHANGELOG.md)）
 - 许可：[MIT](LICENSE)
 - 技能本体：[`grow-me/`](grow-me/)（`SKILL.md` + `references/` + `scripts/` + `evals/`）
 
@@ -127,7 +127,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File grow-me/scripts/voice-offlin
 powershell -NoProfile -ExecutionPolicy Bypass -File grow-me/scripts/voice-notify.ps1 -File .grow-me/voice/20261121-1955-demo.txt
 ```
 
-- 默认 **Edge 神经语音**（`zh-CN-XiaoxiaoNeural`，在线免 Key）；Edge 失败自动回退离线 Piper 中英混读。
+- 默认 **Edge 神经语音 C 云希**（`zh-CN-YunxiNeural`，中英混读正常）；预设 `-Preset a|b|c`（A 晓晓女声 / B 晓伊活泼女 / C 云希男声）；Edge 失败自动回退离线 Piper 中英混读。
+- 播放链路：Edge MP3 → Python `soundfile` 解码 WAV → `SoundPlayer`（修复 MP3 播放变调问题）。
 - 脚本检测前台窗口：**用户不在本窗口** → 加"提醒："并重复 2 遍；在窗口 → 只说 1 遍；回执是 JSON 并写入 `~/.grow-me/voice/notify.jsonl`。
 - 换声音：`-Voice zh-CN-YunxiNeural`；语速 `-Rate +10%`；重复次数 `-RepeatBackground 3`。
 

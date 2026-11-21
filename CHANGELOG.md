@@ -3,6 +3,13 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.9.1 — 三档 Edge 音色预设，默认云希（C）
+
+- `voice-edge-tts.ps1` 新增 `-Preset a|b|c` 与 `-ListPresets`（A 晓晓女声 / B 晓伊活泼女 / C 云希男声，**默认 C**）。
+- `voice-notify.ps1` 同步支持 `-Preset`，默认音色改为 `zh-CN-YunxiNeural`。
+- 修复播放链路：Edge MP3 先经 Python `soundfile` 解码成 WAV，再 `SoundPlayer` 播放（此前 MP3 播放器报告成功但变调/无声）。
+- 用户试听结论：A/B/C 均可、D 云扬读英文略怪 → 日常用 C 云希。
+
 ## V1.9.0 — 任务完成语音播报（白话摘要 + 前台感知 + Edge 神经语音）
 
 - 新增 `scripts/voice-edge-tts.ps1`：Edge 神经语音（zh-CN-XiaoxiaoNeural 等，在线免 Key），WPF 播放 MP3。

@@ -11,7 +11,8 @@
 param(
   [string]$Text,
   [string]$File,
-  [string]$Voice = 'zh-CN-XiaoxiaoNeural',
+  [string]$Voice = 'zh-CN-YunxiNeural',
+  [ValidateSet('a', 'b', 'c')][string]$Preset,
   [string]$Rate = '+0%',
   [string]$ForegroundWindow = '',
   [int]$RepeatBackground = 2,
@@ -19,6 +20,12 @@ param(
   [switch]$NoPlay
 )
 $ErrorActionPreference = 'Stop'
+$presetVoices = @{
+  a = 'zh-CN-XiaoxiaoNeural'
+  b = 'zh-CN-XiaoyiNeural'
+  c = 'zh-CN-YunxiNeural'
+}
+if ($Preset) { $Voice = $presetVoices[$Preset] }
 # built from chars so this file stays pure ASCII (PS 5.1 reads BOM-less files as ANSI)
 $reminderPrefix = -join ([char]0x63D0, [char]0x9192, [char]0xFF1A)
 $here = $PSScriptRoot

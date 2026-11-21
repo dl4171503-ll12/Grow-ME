@@ -32,6 +32,11 @@
 
 ## 版本记录
 
+### V1.9.1（三档 Edge 音色预设，默认云希）
+- `voice-edge-tts.ps1` 新增 `-Preset a|b|c`（A 晓晓女声 / B 晓伊活泼女 / C 云希男声，默认 C）与 `-ListPresets`；`voice-notify.ps1` 同步支持 `-Preset`，默认音色改为 `zh-CN-YunxiNeural`。
+- 修复播放链路：Edge MP3 先用 Python `soundfile` 解码为 WAV，再 `SoundPlayer` 播放（此前 MP3 播放器报告成功但变调/无声）。
+- 用户试听结论：A/B/C 均可，D 云扬读英文略怪，故选 C 云希为日常播报音色。
+
 ### V1.9.0（任务完成语音播报 + Edge 神经语音）
 - 新增 `scripts/voice-edge-tts.ps1`：Edge 神经语音（`zh-CN-XiaoxiaoNeural` 等，在线免 Key），WPF 播放 MP3；支持 `-ListVoices/-Rate/-Pitch/-SaveMp3/-NoPlay`。
 - 新增 `scripts/voice-notify.ps1`：任务完成播报——读白话摘要文件（或 `-Text`）→ Edge 朗读 → 前台窗口检测（前台不是 DeepSeek Harness/DSH 时加"提醒："并重复 2 遍）；Edge 失败自动回退离线 Piper；JSON 回执 + `~/.grow-me/voice/notify.jsonl` 日志。

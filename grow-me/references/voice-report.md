@@ -53,9 +53,18 @@ powershell -File scripts/voice-notify.ps1 -File x.txt -Voice zh-CN-YunxiNeural -
 
 ## 语音后端
 
-- 默认 **Edge 神经语音**（`zh-CN-XiaoxiaoNeural`，需联网、免 Key）：`scripts/voice-edge-tts.ps1`，列出中文音色 `-ListVoices`。
+- 默认 **Edge 神经语音 C 云希**（`zh-CN-YunxiNeural`，男声、阳光，中英混读正常）——用户已选定为日常播报音色。
+- 内置三档预设（`-Preset a|b|c`）：
+
+  | 预设 | 音色 | 特点 |
+  |---|---|---|
+  | `a` | `zh-CN-XiaoxiaoNeural` | 女声，温暖 |
+  | `b` | `zh-CN-XiaoyiNeural` | 女声，活泼 |
+  | `c` | `zh-CN-YunxiNeural` | 男声，阳光（**默认**） |
+
+  查看映射：`voice-edge-tts.ps1 -ListPresets`；完整音色表：`-ListVoices`。
 - Edge 失败（断网/超时）→ 自动回退 **离线 Piper 中英混读**（`voice-offline.ps1`），任务不中断。
-- 想彻底离线：`-Edge` 无此开关时可直接调 `voice-offline.ps1`；或把 `voice-notify.ps1` 里的 `$edgeScript` 换成离线脚本。
+- 播放链路：Edge 输出 MP3 → Python `soundfile` 解码成 WAV → `SoundPlayer` 播放（避免 MP3 播放器变调）。
 
 ## 失败处理
 
