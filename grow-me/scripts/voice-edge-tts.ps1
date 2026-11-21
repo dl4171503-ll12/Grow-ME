@@ -12,6 +12,8 @@ param(
   [string]$Rate = '+0%',
   [string]$Pitch = '+0Hz',
   [string]$Volume = '+0%',
+  [double]$GainDb = 0,
+  [switch]$Normalize,
   [string]$SaveMp3,
   [switch]$NoPlay,
   [switch]$ListVoices,
@@ -24,7 +26,7 @@ $presets = [ordered]@{
   a     = @{ voice = 'zh-CN-XiaoxiaoNeural'; label = 'A Xiaoxiao (female, warm)'; rate = 0; pitch = 0; volume = 0 }
   b     = @{ voice = 'zh-CN-XiaoyiNeural';   label = 'B Xiaoyi (female, lively)'; rate = 0; pitch = 0; volume = 0 }
   c     = @{ voice = 'zh-CN-YunxiNeural';    label = 'C Yunxi (male, sunny, default)'; rate = 0; pitch = 0; volume = 0 }
-  youth = @{ voice = 'zh-CN-YunxiNeural';    label = 'Youth gentle male 16-18 (Yunxi +8Hz, -2% rate, volume 0)'; rate = -2; pitch = 8; volume = 0 }
+  youth = @{ voice = 'zh-CN-YunxiNeural';    label = 'Youth gentle male 16-18 (Yunxi +8Hz, -2% rate, +30% vol, normalized)'; rate = -2; pitch = 8; volume = 30 }
 }
 if ($ListPresets) {
   foreach ($k in $presets.Keys) { "{0} -> {1} | {2}" -f $k, $presets[$k].voice, $presets[$k].label }
@@ -36,6 +38,7 @@ if ($Preset) {
   $presetRate = [double]$presets[$Preset].rate
   $presetPitch = [double]$presets[$Preset].pitch
   $presetVolume = [double]$presets[$Preset].volume
+  if ($Preset -eq 'youth') { $Normalize = $true }
 }
 if ($ListVoices) {
   & py -3 -m edge_tts --list-voices 2>&1 | Select-String 'zh-CN|en-US' | ForEach-Object { $_.Line }
@@ -231,7 +234,22 @@ if (-not $outWav) {
   if ($outWav) { $outWav = [IO.Path]::ChangeExtension($outWav, '.wav') }
   else { $outWav = Join-Path $dir ('edge-' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.wav') }
 }
-Write-Wav $outWav ([double[]]$all) $sampleRate
+
+# loudness: optional peak normalization to -1 dBFS, then optional gain
+$arr = [double[]]$all.ToArray()
+if ($Normalize) {
+  $peak = 0.0
+  foreach ($s in $arr) { if ([Math]::Abs($s) -gt $peak) { $peak = [Math]::Abs($s) } }
+  if ($peak -gt 1) {
+    $scale = (32767.0 * 0.9) / $peak
+    for ($i = 0; $i -lt $arr.Length; $i++) { $arr[$i] = $arr[$i] * $scale }
+  }
+}
+if ($GainDb -ne 0) {
+  $g = [Math]::Pow(10.0, $GainDb / 20.0)
+  for ($i = 0; $i -lt $arr.Length; $i++) { $arr[$i] = $arr[$i] * $g }
+}
+Write-Wav $outWav $arr $sampleRate
 
 $spoken = ($segments | ForEach-Object { $_.text.Trim() }) -join ''
 Write-Host ('VOICE edge:' + $Voice + ' rate=' + $Rate)

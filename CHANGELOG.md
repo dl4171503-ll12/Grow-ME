@@ -3,6 +3,12 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.9.5 — youth 响度修正（音量 +30% + 峰值归一化）
+
+- 用户反馈声音太小；`youth` 预设音量改 +30%，并对合成波形做峰值归一化到 -1 dBFS（`-Normalize` 自动生效）。
+- `voice-edge-tts.ps1` 新增 `-GainDb` / `-Normalize`。
+- 实测：峰值 32% → 90%，RMS 1358 → 3277（约 2.4 倍）。
+
 ## V1.9.4 — youth 青年音调音（不尖、音量正常）
 
 - 用户反馈原 youth（+14Hz、-6%、-10% 音量）偏尖像花栗鼠、音量偏小；试听 N1–N4 后选定 N1。

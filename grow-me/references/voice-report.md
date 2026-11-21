@@ -88,7 +88,7 @@ powershell -File scripts/voice-notify.ps1 -File x.txt -Voice zh-CN-YunxiNeural -
   | `a` | `zh-CN-XiaoxiaoNeural` | 女声，温暖 |
   | `b` | `zh-CN-XiaoyiNeural` | 女声，活泼 |
   | `c` | `zh-CN-YunxiNeural` | 男声，阳光（**默认**） |
-  | `youth` | `zh-CN-YunxiNeural` + 升调 +8Hz、语速 -2%、音量 0% | 16–18 岁青年男声，温柔开朗、不刺耳（用户选定；原 +14Hz/-6%/-10% 因偏尖偏小已调整） |
+  | `youth` | `zh-CN-YunxiNeural` + 升调 +8Hz、语速 -2%、音量 +30%、峰值归一化到 -1dB | 16–18 岁青年男声，温柔开朗、不刺耳、响度正常（用户选定） |
 
   查看映射：`voice-edge-tts.ps1 -ListPresets`；完整音色表：`-ListVoices`。
   用法：`voice-edge-tts.ps1 -Preset youth -Text "..."`；`voice-notify.ps1 -Preset youth -File x.txt`。
