@@ -3,6 +3,12 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.9.2 — 表情不朗读，按含义/数量改语气
+
+- `voice-edge-tts.ps1` 表情感知：表情不进入朗读文本；按类别（开心/难过/生气/惊讶/疑问）与数量（1–3 个，封顶 1.6 倍）调 `rate`/`pitch`；按表情切句、逐句合成后解码 WAV 拼接播放。
+- 新增 `-NoEmotion`（关闭）、`-SpeakEmoji`（照读）；负值参数改用 `--rate=`/`--pitch=` 形式。
+- 实测：`Carol，您好😊😊！我是David的AI，六君！🎉` → cheerful +8%/+5Hz、+6%/+4Hz；`😢` → sad -8%/-4Hz；表情均未朗读。
+
 ## V1.9.1 — 三档 Edge 音色预设，默认云希（C）
 
 - `voice-edge-tts.ps1` 新增 `-Preset a|b|c` 与 `-ListPresets`（A 晓晓女声 / B 晓伊活泼女 / C 云希男声，**默认 C**）。

@@ -51,6 +51,33 @@ powershell -File scripts/voice-notify.ps1 -Text "做完了，报告已经生成�
 powershell -File scripts/voice-notify.ps1 -File x.txt -Voice zh-CN-YunxiNeural -Rate +10% -RepeatBackground 3
 ```
 
+## 表情符号处理（默认不读，改成语气）
+
+`voice-edge-tts.ps1` 默认开启表情感知（`-NoEmotion` 可关，`-SpeakEmoji` 可恢复照读）：
+
+1. 表情符号**不进入朗读文本**（不会被念成"笑脸"或乱码）；
+2. 按表情的**含义**给所在句子换情绪，按**数量**放大（1 个≈1.0 倍，2 个≈1.3 倍，3 个封顶 1.6 倍）；
+3. 实现方式：按表情切句 → 每句单独用 Edge 合成（不同 `rate`/`pitch`）→ 解码 WAV → 拼接播放。
+
+| 表情类 | 例子 | 效果 |
+|---|---|---|
+| 开心 | 🙂😊😄😁😍❤️✨👍🎉 | 语速 +6%、音调 +4Hz（越多越明显） |
+| 难过 | 😢😭😞😔🥺 | 语速 -8%、音调 -4Hz |
+| 生气 | 😡😠🤬💢 | 语速 +10%、音调 -6Hz |
+| 惊讶 | 😮😲😱🤯 | 语速 +8%、音调 +8Hz |
+| 疑问 | ❓❔❕❗ | 语速 +2%、音调 +5Hz |
+
+示例：
+
+```powershell
+# 原句（无表情）
+... voice-edge-tts.ps1 -Text "Carol，您好，我是David的AI，六君！"
+# 带表情：😊😊 归前一句加强，🎉 收尾欢快，都不读出来
+... voice-edge-tts.ps1 -Text "Carol，您好😊😊！我是David的AI，六君！🎉"
+# 悲伤对照
+... voice-edge-tts.ps1 -Text "Carol，您好😢。我是David的AI，六君。"
+```
+
 ## 语音后端
 
 - 默认 **Edge 神经语音 C 云希**（`zh-CN-YunxiNeural`，男声、阳光，中英混读正常）——用户已选定为日常播报音色。

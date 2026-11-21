@@ -10,12 +10,12 @@ description: >-
   接手后会先起本地监测台（默认端口 8176）、扫描本机已装 AI，并用定位仪上报心跳与证据。本 skill 装上后，即使没点名，动代码/跑命令前也应遵守本协议。
 license: MIT
 metadata:
-  version: V1.9.1
+  version: V1.9.2
   kind: policy
   maturity: stable
 ---
 
-# Grow Me — V1.9.1
+# Grow Me — V1.9.2
 
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 常驻模式：装上即对所有动手类任务生效，不必每次点名。
@@ -209,6 +209,8 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 2. `powershell -File scripts/voice-notify.ps1 -File <该文件>` —— 默认 **Edge 神经语音 C 云希**（`zh-CN-YunxiNeural`，中英混读正常）；预设 `-Preset a|b|c`（晓晓/晓伊/云希）；
 3. 脚本自动判断前台：用户**不在本窗口**（前台不是 DeepSeek Harness/DSH）→ 加"提醒："并**重复 2 遍**；在本窗口只说 1 遍；
 4. Edge 不可用自动回退离线 Piper；播报失败只记一行，不影响任务完成判定。
+5. **表情不朗读**：默认按表情含义与数量调语速/音调（😊 开心、😢 难过…；`-NoEmotion` 关闭，`-SpeakEmoji` 照读），细节见
+   [references/voice-report.md](references/voice-report.md)。
 
 - 硬规则：白话摘要是**单独生成**的，不是把技术报告念一遍；说不清就说"结果在报告里"。
 - 调参：`-Voice zh-CN-YunxiNeural`（男声）、`-Rate +10%`、`-RepeatBackground 3`；模板与例子见

@@ -32,6 +32,11 @@
 
 ## 版本记录
 
+### V1.9.2（表情不朗读，按含义/数量改语气）
+- `voice-edge-tts.ps1` 新增表情感知：表情不进入朗读文本；按表情类别（开心/难过/生气/惊讶/疑问）与数量（1–3 个，封顶 1.6 倍）调整 `rate`/`pitch`；按表情切句、逐句合成后解码 WAV 拼接播放。
+- 新增开关 `-NoEmotion`（关闭情绪）、`-SpeakEmoji`（恢复照读）；负值参数改用 `--rate=`/`--pitch=` 形式避免被当成选项。
+- 实测：`Carol，您好😊😊！我是David的AI，六君！🎉` → 两句 cheerful +8%/+5Hz 与 +6%/+4Hz；`😢` → sad -8%/-4Hz；两次都未朗读表情。
+
 ### V1.9.1（三档 Edge 音色预设，默认云希）
 - `voice-edge-tts.ps1` 新增 `-Preset a|b|c`（A 晓晓女声 / B 晓伊活泼女 / C 云希男声，默认 C）与 `-ListPresets`；`voice-notify.ps1` 同步支持 `-Preset`，默认音色改为 `zh-CN-YunxiNeural`。
 - 修复播放链路：Edge MP3 先用 Python `soundfile` 解码为 WAV，再 `SoundPlayer` 播放（此前 MP3 播放器报告成功但变调/无声）。
