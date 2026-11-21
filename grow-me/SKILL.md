@@ -10,12 +10,12 @@ description: >-
   接手后会先起本地监测台（默认端口 8176）、扫描本机已装 AI，并用定位仪上报心跳与证据。本 skill 装上后，即使没点名，动代码/跑命令前也应遵守本协议。
 license: MIT
 metadata:
-  version: V1.8.0
+  version: V1.8.1
   kind: policy
   maturity: stable
 ---
 
-# Grow Me — V1.8.0
+# Grow Me — V1.8.1
 
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 常驻模式：装上即对所有动手类任务生效，不必每次点名。
@@ -195,6 +195,7 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 
 - `node scripts/voice-agent.mjs demo` — 命令行对话（内置前台 Agent，离线可用；`:i` 打断、`:q` 退出）
 - `node scripts/voice-agent.mjs serve --port 8180` — `POST /api/turn`、`GET /api/transcript`、`GET /api/events`(SSE)、`POST /api/interrupt`
+- 离线语音（不接 API、不要 Key）：`powershell -File scripts/voice-offline.ps1 -Loop` —— Windows SAPI zh-CN 离线识别/合成，说"退出"停止；`-Text "..." -SaveWav x.wav` 只合成留证
 - 对齐：AgentSession 生命周期 / 轮次检测 / 打断(barge-in) / 工具调用 / 插件化 STT-LLM-TTS / 事件钩子 / 转写与延迟指标
 - 边界：不含 WebRTC/SIP/电话与真实音频编解码；生产级直接用上游 + LiveKit 服务器（`pip install livekit-agents`）
 - 能力映射与接真实模型的方法：[references/livekit-agents.md](references/livekit-agents.md)

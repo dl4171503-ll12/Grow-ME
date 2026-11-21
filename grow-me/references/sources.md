@@ -32,6 +32,12 @@
 
 ## 版本记录
 
+### V1.8.1（离线语音闭环：不接 API 也能开口）
+- 新增 `scripts/voice-offline.ps1`：Windows SAPI 离线语音壳——麦克风 → 离线识别(zh-CN) → 本地引擎 → 离线合成(zh-CN)；
+  支持 `-Text` 合成留证（`-SaveWav`）、`-Loop` 连续对话、`-EngineUrl`/`-Seconds` 参数；全程不联网、不要 API Key。
+- 本机实测：TTS=`Microsoft Huihui Desktop`(zh-CN)，识别器=`MS-2052-80-DESK`(zh-CN)，合成 WAV 7.0 秒可回放。
+- 文档：`references/livekit-agents.md` 增「离线语音（不接 API、不要 Key）」；SKILL 第 10 节补一行命令；边界更新。
+
 ### V1.8.0（实时语音 Agent：vendor LiveKit Agents + 本地等价运行时）
 - vendor 上游 `livekit/agents` 核心包与语音示例（Apache-2.0，`vendor/livekit-agents/`，`SOURCE.md` 记录 HEAD `d78f399…`）。
 - 新增 `scripts/voice-agent.mjs`：零依赖、无需 LiveKit 服务器的能力等价实现——AgentSession 生命周期、

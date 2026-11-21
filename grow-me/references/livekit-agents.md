@@ -54,6 +54,23 @@ $env:OPENAI_MODEL="gpt-4o-mini"
 node scripts/voice-agent.mjs serve --port 8180     # llm 变为 openai-compatible
 ```
 
+## 离线语音（不接 API、不要 Key）
+
+Windows 自带 SAPI 就能闭环：**麦克风 → 离线识别(zh-CN) → 本地引擎 → 离线合成(zh-CN)**。
+
+```powershell
+# 1) 起本地引擎（离线规则 LLM，无需 Key）
+node scripts/voice-agent.mjs serve --port 8180
+# 2) 说话即对话；说“退出/结束”或 Ctrl+C 停止
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/voice-offline.ps1 -Loop
+# 3) 只合成一句到 WAV（验证/留证，不占扬声器）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/voice-offline.ps1 -Text "你好" -SaveWav .\tts.wav
+```
+
+- 依赖：Windows `System.Speech`（本机实测：TTS=`Microsoft Huihui Desktop` (zh-CN)，识别器=`MS-2052-80-DESK` (zh-CN)）。
+- 链路：SAPI 默认麦克风/扬声器；全程不联网、不调任何 API。
+- 局限：Windows 离线识别引擎不是大模型，嘈杂环境准确率一般；要云端级效果再接真实 STT（见上文插件）。
+
 ## 想用上游完整能力（生产级 WebRTC / 电话）
 
 ```bash
@@ -68,7 +85,7 @@ llamaindex-rag、mcp），可直接对照改造。
 ## 明确不做的（诚实边界）
 
 - **WebRTC/SIP/电话**：本实现不建媒体通道、不做音频编解码与抖动缓冲 —— 需要时用上游 + LiveKit 服务器。
-- **真实 STT/TTS**：离线模式是确定性回退（文本直通/文本返回），真实语音需接插件（OpenAI Realtime 等）。
+- **真实 STT/TTS**：离线模式是确定性回退（文本直通/文本返回）；真实语音可用 Windows SAPI 离线语音（`scripts/voice-offline.ps1`），要云端级效果再接插件（OpenAI Realtime 等）。
 - **多 Agent 任务分发/调度**：上游的 job dispatch、worker 池未复刻。
 - **语义轮次模型**：上游用 transformer 判停；本实现按句切分 + 能量 VAD。
 
