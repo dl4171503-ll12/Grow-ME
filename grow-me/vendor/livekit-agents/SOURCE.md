@@ -21,6 +21,7 @@
 - `tests/`（5.3 MB）
 - 其它 `examples/`（3.5 MB）
 - `.github/`、`uv.lock`、`pyproject.toml` 等构建文件
+- `livekit-agents/livekit/agents/resources/*.ogg` 音频样例：上游用 Git LFS 存储，tarball 里是 0 字节占位，已移除（需要时去上游取真实文件）
 
 ## 本地等价运行时
 
