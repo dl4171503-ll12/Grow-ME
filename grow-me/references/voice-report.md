@@ -88,8 +88,10 @@ powershell -File scripts/voice-notify.ps1 -File x.txt -Voice zh-CN-YunxiNeural -
   | `a` | `zh-CN-XiaoxiaoNeural` | 女声，温暖 |
   | `b` | `zh-CN-XiaoyiNeural` | 女声，活泼 |
   | `c` | `zh-CN-YunxiNeural` | 男声，阳光（**默认**） |
+  | `youth` | `zh-CN-YunxiNeural` + 升调 +14Hz、语速 -6%、音量 -10% | 16–18 岁青年男声，温柔开朗（用户选定） |
 
   查看映射：`voice-edge-tts.ps1 -ListPresets`；完整音色表：`-ListVoices`。
+  用法：`voice-edge-tts.ps1 -Preset youth -Text "..."`；`voice-notify.ps1 -Preset youth -File x.txt`。
 - Edge 失败（断网/超时）→ 自动回退 **离线 Piper 中英混读**（`voice-offline.ps1`），任务不中断。
 - 播放链路：Edge 输出 MP3 → Python `soundfile` 解码成 WAV → `SoundPlayer` 播放（避免 MP3 播放器变调）。
 

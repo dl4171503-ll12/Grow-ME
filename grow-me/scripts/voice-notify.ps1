@@ -12,20 +12,39 @@ param(
   [string]$Text,
   [string]$File,
   [string]$Voice = 'zh-CN-YunxiNeural',
-  [ValidateSet('a', 'b', 'c')][string]$Preset,
+  [ValidateSet('a', 'b', 'c', 'youth')][string]$Preset,
   [string]$Rate = '+0%',
+  [string]$Pitch = '+0Hz',
+  [string]$Volume = '+0%',
   [string]$ForegroundWindow = '',
   [int]$RepeatBackground = 2,
   [switch]$ForceForeground,
   [switch]$NoPlay
 )
 $ErrorActionPreference = 'Stop'
-$presetVoices = @{
-  a = 'zh-CN-XiaoxiaoNeural'
-  b = 'zh-CN-XiaoyiNeural'
-  c = 'zh-CN-YunxiNeural'
+$presetMap = @{
+  a     = @{ voice = 'zh-CN-XiaoxiaoNeural'; rate = 0; pitch = 0; volume = 0 }
+  b     = @{ voice = 'zh-CN-XiaoyiNeural';   rate = 0; pitch = 0; volume = 0 }
+  c     = @{ voice = 'zh-CN-YunxiNeural';    rate = 0; pitch = 0; volume = 0 }
+  youth = @{ voice = 'zh-CN-YunxiNeural';    rate = -6; pitch = 14; volume = -10 }
 }
-if ($Preset) { $Voice = $presetVoices[$Preset] }
+$effRate = $Rate
+$effPitch = $Pitch
+$effVolume = $Volume
+if ($Preset) {
+  $Voice = $presetMap[$Preset].voice
+  # keep the numeric accumulation simple: emit combined offsets as strings
+  function Add-Offset([string]$base, [double]$delta, [string]$unit) {
+    $v = 0.0
+    if ($base -match '([+-]?\d+(?:\.\d+)?)') { $v = [double]$Matches[1] }
+    $v += $delta
+    $sign = if ($v -lt 0) { '-' } else { '+' }
+    return ('{0}{1:0}{2}' -f $sign, [Math]::Abs([Math]::Round($v)), $unit)
+  }
+  $effRate = Add-Offset $Rate $presetMap[$Preset].rate '%'
+  $effPitch = Add-Offset $Pitch $presetMap[$Preset].pitch 'Hz'
+  $effVolume = Add-Offset $Volume $presetMap[$Preset].volume '%'
+}
 # built from chars so this file stays pure ASCII (PS 5.1 reads BOM-less files as ANSI)
 $reminderPrefix = -join ([char]0x63D0, [char]0x9192, [char]0xFF1A)
 $here = $PSScriptRoot
@@ -90,7 +109,7 @@ $fallback = $false
 for ($i = 1; $i -le $repeat; $i++) {
   $ok = $true
   if (Test-Path $edgeScript) {
-    $edgeArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $edgeScript, '-Text', $toSpeak, '-Voice', $Voice, '-Rate', $Rate)
+    $edgeArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $edgeScript, '-Text', $toSpeak, '-Voice', $Voice, '-Rate', $effRate, '-Pitch', $effPitch, '-Volume', $effVolume)
     if ($NoPlay) { $edgeArgs += '-NoPlay' }
     & powershell @edgeArgs 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) { $ok = $false }

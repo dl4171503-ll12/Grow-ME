@@ -32,6 +32,11 @@
 
 ## 版本记录
 
+### V1.9.3（新增 youth 青年音预设：16–18 岁温柔开朗男声）
+- 用户试听 10 个候选后选定：`Yunxi` 底子 + 音调 +14Hz、语速 -6%、音量 -10%，命名为预设 `youth`。
+- `voice-edge-tts.ps1` / `voice-notify.ps1` 均支持 `-Preset youth`；`voice-edge-tts.ps1` 新增 `-Volume` 参数（正负号规范化）。
+- 文档：`references/voice-report.md` 预设表加入 youth；默认仍是 `c`（云希）。
+
 ### V1.9.2（表情不朗读，按含义/数量改语气）
 - `voice-edge-tts.ps1` 新增表情感知：表情不进入朗读文本；按表情类别（开心/难过/生气/惊讶/疑问）与数量（1–3 个，封顶 1.6 倍）调整 `rate`/`pitch`；按表情切句、逐句合成后解码 WAV 拼接播放。
 - 新增开关 `-NoEmotion`（关闭情绪）、`-SpeakEmoji`（恢复照读）；负值参数改用 `--rate=`/`--pitch=` 形式避免被当成选项。

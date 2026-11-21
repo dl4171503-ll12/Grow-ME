@@ -8,9 +8,10 @@
 param(
   [string]$Text,
   [string]$Voice = 'zh-CN-YunxiNeural',
-  [ValidateSet('a', 'b', 'c')][string]$Preset,
+  [ValidateSet('a', 'b', 'c', 'youth')][string]$Preset,
   [string]$Rate = '+0%',
   [string]$Pitch = '+0Hz',
+  [string]$Volume = '+0%',
   [string]$SaveMp3,
   [switch]$NoPlay,
   [switch]$ListVoices,
@@ -20,15 +21,22 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $presets = [ordered]@{
-  a = @{ voice = 'zh-CN-XiaoxiaoNeural'; label = 'A Xiaoxiao (female, warm)' }
-  b = @{ voice = 'zh-CN-XiaoyiNeural'; label = 'B Xiaoyi (female, lively)' }
-  c = @{ voice = 'zh-CN-YunxiNeural'; label = 'C Yunxi (male, sunny, default)' }
+  a     = @{ voice = 'zh-CN-XiaoxiaoNeural'; label = 'A Xiaoxiao (female, warm)'; rate = 0; pitch = 0; volume = 0 }
+  b     = @{ voice = 'zh-CN-XiaoyiNeural';   label = 'B Xiaoyi (female, lively)'; rate = 0; pitch = 0; volume = 0 }
+  c     = @{ voice = 'zh-CN-YunxiNeural';    label = 'C Yunxi (male, sunny, default)'; rate = 0; pitch = 0; volume = 0 }
+  youth = @{ voice = 'zh-CN-YunxiNeural';    label = 'Youth gentle male 16-18 (Yunxi +14Hz, -6% rate, -10% vol)'; rate = -6; pitch = 14; volume = -10 }
 }
 if ($ListPresets) {
   foreach ($k in $presets.Keys) { "{0} -> {1} | {2}" -f $k, $presets[$k].voice, $presets[$k].label }
   exit 0
 }
-if ($Preset) { $Voice = $presets[$Preset].voice }
+$presetRate = 0.0; $presetPitch = 0.0; $presetVolume = 0.0
+if ($Preset) {
+  $Voice = $presets[$Preset].voice
+  $presetRate = [double]$presets[$Preset].rate
+  $presetPitch = [double]$presets[$Preset].pitch
+  $presetVolume = [double]$presets[$Preset].volume
+}
 if ($ListVoices) {
   & py -3 -m edge_tts --list-voices 2>&1 | Select-String 'zh-CN|en-US' | ForEach-Object { $_.Line }
   exit 0
@@ -56,8 +64,13 @@ function Format-Pitch([double]$v) {
   return ("{0}{1:0}Hz" -f $sign, [Math]::Abs([Math]::Round($v)))
 }
 
-function Synth-Mp3([string]$text, [string]$rate, [string]$pitch, [string]$outMp3) {
-  & py -3 -m edge_tts --voice $Voice "--rate=$rate" "--pitch=$pitch" --text $text --write-media $outMp3 2>&1 | Out-Null
+function Synth-Mp3([string]$text, [string]$rate, [string]$pitch, [string]$vol, [string]$outMp3) {
+  if ($vol -match '^[+-]?\d') {
+    $vv = Parse-Offset $vol
+    $sign = if ($vv -lt 0) { '-' } else { '+' }
+    $vol = ('{0}{1:0}%' -f $sign, [Math]::Abs([Math]::Round($vv)))
+  }
+  & py -3 -m edge_tts --voice $Voice "--rate=$rate" "--pitch=$pitch" "--volume=$vol" --text $text --write-media $outMp3 2>&1 | Out-Null
   if ($LASTEXITCODE -ne 0 -or -not (Test-Path $outMp3) -or (Get-Item $outMp3).Length -lt 500) { throw ('edge synth failed: ' + $text) }
 }
 function Mp3-To-Wav([string]$mp3, [string]$wav) {
@@ -179,8 +192,9 @@ if (-not $NoEmotion -and -not $SpeakEmoji) {
   [void]$segments.Add(@{ text = $Text; emojis = @() })
 }
 
-$baseRate = Parse-Offset $Rate
-$basePitch = Parse-Offset $Pitch
+$baseRate = (Parse-Offset $Rate) + $presetRate
+$basePitch = (Parse-Offset $Pitch) + $presetPitch
+$baseVolume = (Parse-Offset $Volume) + $presetVolume
 $all = New-Object System.Collections.Generic.List[double]
 $rateInfo = New-Object System.Collections.ArrayList
 $sampleRate = 24000
@@ -193,7 +207,7 @@ foreach ($seg in $segments) {
   [void]$rateInfo.Add($line)
   $mp3 = Join-Path $work ('seg-' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.mp3')
   $wav = [IO.Path]::ChangeExtension($mp3, '.wav')
-  Synth-Mp3 $seg.text.Trim() (Format-Rate $r) (Format-Pitch $p) $mp3
+  Synth-Mp3 $seg.text.Trim() (Format-Rate $r) (Format-Pitch $p) (Format-Rate $baseVolume) $mp3
   Mp3-To-Wav $mp3 $wav
   $w = Read-Wav $wav
   $ch = $w.fmt.ch; $bits = $w.fmt.bits; $data = $w.data

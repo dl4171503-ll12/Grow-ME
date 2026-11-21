@@ -3,6 +3,11 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.9.3 — 新增 youth 青年音预设（16–18 岁温柔开朗男声）
+
+- 预设 `youth`：`Yunxi` + 音调 +14Hz、语速 -6%、音量 -10%；`voice-edge-tts.ps1` 与 `voice-notify.ps1` 均支持 `-Preset youth`。
+- `voice-edge-tts.ps1` 新增 `-Volume` 参数（正负号规范化）；默认仍是 `c`（云希）。
+
 ## V1.9.2 — 表情不朗读，按含义/数量改语气
 
 - `voice-edge-tts.ps1` 表情感知：表情不进入朗读文本；按类别（开心/难过/生气/惊讶/疑问）与数量（1–3 个，封顶 1.6 倍）调 `rate`/`pitch`；按表情切句、逐句合成后解码 WAV 拼接播放。
