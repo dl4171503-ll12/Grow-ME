@@ -3,6 +3,18 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.8.3 — 离线神经语音 + 中英混读修音
+
+- 新增 `scripts/voice-piper-tts.ps1`（Piper 离线神经 TTS，`-Ensure` 经 hf-mirror 下模型）与 `scripts/voice-hybrid-tts.ps1`（中文 huayan + 英文 lessac 自动分流、重采样拼接）。
+- `voice-offline.ps1` 默认引擎改为 `hybrid`（回退 piper→winrt→sapi）；修掉 “AI Agent 读成 爱爱进”。
+- 模型缓存在 `%USERPROFILE%\.grow-me\tts\piper`（约 63MB×2，不进技能包）；安装 `py -3 -m pip install piper-tts`。
+- 实测：同一句 118KB / 2.9s。
+
+## V1.8.2 — 换更好听的离线声音（WinRT 自然语音）
+
+- 新增 `scripts/voice-winrt-tts.ps1`：WinRT `Windows.Media.SpeechSynthesis` 调 Windows 自然语音（`-ListVoices`/`-Voice`/`-SaveWav`/`-Rate`）。
+- `voice-offline.ps1` 支持 `-Voice`（Yaoyao/Kangkang 等）与 `-TtsEngine`。
+
 ## V1.8.1 — 离线语音闭环（不接 API、不要 Key）
 
 - 新增 `grow-me/scripts/voice-offline.ps1`：Windows SAPI 离线语音壳——麦克风 → 离线识别(zh-CN) → 本地引擎 → 离线合成(zh-CN)；

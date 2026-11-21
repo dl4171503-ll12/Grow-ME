@@ -67,8 +67,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/voice-offline.ps1 -L
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/voice-offline.ps1 -Text "你好" -SaveWav .\tts.wav
 ```
 
-- 依赖：Windows `System.Speech`（本机实测：TTS=`Microsoft Huihui Desktop` (zh-CN)，识别器=`MS-2052-80-DESK` (zh-CN)）。
-- 链路：SAPI 默认麦克风/扬声器；全程不联网、不调任何 API。
+- 依赖：Windows 离线语音（SAPI 识别 + Piper 神经合成，模型缓存在 `%USERPROFILE%\.grow-me\tts\piper`，不联网运行）。
+- **中英混读**：`voice-hybrid-tts.ps1` 按字符自动分流——中文用 `zh_CN-huayan-medium`，英文用 `en_US-lessac-medium`，再拼成同一段 22050Hz WAV；所以 "AI Agent" 会被英文音色正确读出。
+- 换声音/语速：`voice-offline.ps1 -Loop -LengthScale 1.1`（放慢）；`-TtsEngine piper`（纯中文 huayan）、`winrt`（微软 Yaoyao/Kangkang）、`sapi`（旧 Huihui）。
+- 首次下载模型：`powershell -File scripts/voice-hybrid-tts.ps1 -Text "你好" -Ensure`（hf-mirror，两个模型约 63MB/个）。
 - 局限：Windows 离线识别引擎不是大模型，嘈杂环境准确率一般；要云端级效果再接真实 STT（见上文插件）。
 
 ## 想用上游完整能力（生产级 WebRTC / 电话）

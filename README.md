@@ -3,7 +3,7 @@
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 一个「常驻工作协议」技能：装上即对所有动手类任务生效，不必每次点名。
 
-- 当前版本：**V1.8.1**（见 [CHANGELOG.md](CHANGELOG.md)）
+- 当前版本：**V1.8.3**（见 [CHANGELOG.md](CHANGELOG.md)）
 - 许可：[MIT](LICENSE)
 - 技能本体：[`grow-me/`](grow-me/)（`SKILL.md` + `references/` + `scripts/` + `evals/`）
 
@@ -111,7 +111,7 @@ node grow-me/scripts/beacon.mjs telemetry --agent win-a --tokens 84213 --waste 6
 ```powershell
 node grow-me/scripts/voice-agent.mjs demo                # 命令行对话（内置前台 Agent，离线可用）
 node grow-me/scripts/voice-agent.mjs serve --port 8180   # POST /api/turn、GET /api/transcript、GET /api/events(SSE)
-powershell -NoProfile -ExecutionPolicy Bypass -File grow-me/scripts/voice-offline.ps1 -Loop   # 离线语音（不接 API）
+powershell -NoProfile -ExecutionPolicy Bypass -File grow-me/scripts/voice-offline.ps1 -Loop   # 离线语音（不接 API；Piper 中英混读）
 ```
 
 对齐能力：AgentSession 生命周期、轮次检测、打断（barge-in）、工具调用、插件化 STT/LLM/TTS（离线回退 + OpenAI 兼容）、事件钩子、转写与延迟指标。

@@ -1,12 +1,15 @@
 <#
  voice-offline.ps1 - offline voice shell for the grow-me voice agent (no API keys)
- Uses Windows SAPI (System.Speech) for offline TTS and offline speech recognition,
- and calls the local voice-agent HTTP engine for the LLM/tools/events.
+ Uses offline neural TTS (Piper zh+en hybrid by default, WinRT/SAPI fallback) and
+ Windows SAPI offline speech recognition, and calls the local voice-agent engine.
 
  Modes:
-   -Text "..."        speak text via Windows SAPI (offline TTS)
+   -Text "..."        speak text offline
    -SaveWav path      when used with -Text, write WAV instead of playing (evidence)
-   -Loop              mic -> offline SAPI recognizer -> POST /api/turn -> SAPI speak
+   -Loop              mic -> offline SAPI recognizer -> POST /api/turn -> TTS speak
+   -Voice name        WinRT voice fallback name (default "Microsoft Yaoyao")
+   -TtsEngine hybrid|piper|winrt|sapi  TTS backend (default hybrid)
+   -LengthScale n     Piper speaking speed (default 1.0; >1 slower)
    -EngineUrl url     engine base url (default http://127.0.0.1:8180)
    -Seconds n         recognition timeout per turn (default 10)
 #>
@@ -14,23 +17,72 @@ param(
   [string]$Text,
   [switch]$Loop,
   [string]$SaveWav,
+  [string]$Voice = 'Microsoft Yaoyao',
+  [ValidateSet('hybrid', 'piper', 'winrt', 'sapi')][string]$TtsEngine = 'hybrid',
+  [double]$LengthScale = 1.0,
   [string]$EngineUrl = 'http://127.0.0.1:8180',
   [int]$Seconds = 10
 )
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Speech
+$ttsDir = Join-Path $env:USERPROFILE '.grow-me\tts\piper'
+$winrtScript = Join-Path $PSScriptRoot 'voice-winrt-tts.ps1'
+$piperScript = Join-Path $PSScriptRoot 'voice-piper-tts.ps1'
+$hybridScript = Join-Path $PSScriptRoot 'voice-hybrid-tts.ps1'
+$piperModel = Join-Path $ttsDir 'zh_CN-huayan-medium.onnx'
+$enModel = Join-Path $ttsDir 'en_US-lessac-medium.onnx'
+$piperReady = (Test-Path $piperModel) -and (Test-Path $piperScript)
+$hybridReady = $piperReady -and (Test-Path $enModel) -and (Test-Path $hybridScript)
 
 $syn = New-Object System.Speech.Synthesis.SpeechSynthesizer
-$voice = $syn.GetInstalledVoices() | Where-Object { $_.VoiceInfo.Culture.Name -eq 'zh-CN' } | Select-Object -First 1
-if (-not $voice) { $voice = $syn.GetInstalledVoices() | Select-Object -First 1 }
-if ($voice) {
-  try { $syn.SelectVoice($voice.VoiceInfo.Name) } catch {}
-  Write-Host ("VOICE " + $voice.VoiceInfo.Name + " " + $voice.VoiceInfo.Culture)
-}
+$sapiVoice = $syn.GetInstalledVoices() | Where-Object { $_.VoiceInfo.Culture.Name -eq 'zh-CN' } | Select-Object -First 1
+if (-not $sapiVoice) { $sapiVoice = $syn.GetInstalledVoices() | Select-Object -First 1 }
+if ($sapiVoice) { try { $syn.SelectVoice($sapiVoice.VoiceInfo.Name) } catch {} }
 $syn.Rate = 0
 $syn.Volume = 100
+if ($TtsEngine -eq 'hybrid' -and $hybridReady) { Write-Host 'VOICE piper hybrid (zh huayan + en lessac, mixed language)' }
+elseif ($TtsEngine -eq 'piper' -and $piperReady) { Write-Host 'VOICE piper:zh_CN-huayan-medium (neural)' }
+elseif ($TtsEngine -eq 'hybrid' -or $TtsEngine -eq 'piper') { Write-Host ('PIPER_NOT_READY -> fallback winrt') }
+elseif ($TtsEngine -eq 'winrt') { Write-Host ("VOICE " + $Voice + " (winrt natural)") }
+elseif ($sapiVoice) { Write-Host ("VOICE " + $sapiVoice.VoiceInfo.Name + " " + $sapiVoice.VoiceInfo.Culture) }
 
 function Speak-Text([string]$t) {
+  if ($TtsEngine -eq 'hybrid' -and $hybridReady) {
+    try {
+      if ($SaveWav) {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $hybridScript -Text $t -SaveWav $SaveWav -NoPlay -LengthScale $LengthScale | Out-Null
+      } else {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $hybridScript -Text $t -LengthScale $LengthScale | Out-Null
+      }
+      return
+    } catch {
+      Write-Host ('HYBRID_FALLBACK ' + $_.Exception.Message)
+    }
+  }
+  if ($TtsEngine -eq 'piper' -and $piperReady) {
+    try {
+      if ($SaveWav) {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $piperScript -Text $t -SaveWav $SaveWav -NoPlay -LengthScale $LengthScale | Out-Null
+      } else {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $piperScript -Text $t -LengthScale $LengthScale | Out-Null
+      }
+      return
+    } catch {
+      Write-Host ('PIPER_FALLBACK ' + $_.Exception.Message)
+    }
+  }
+  if ($TtsEngine -eq 'winrt' -and (Test-Path $winrtScript)) {
+    try {
+      if ($SaveWav) {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $winrtScript -Text $t -Voice $Voice -SaveWav $SaveWav -NoPlay | Out-Null
+      } else {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $winrtScript -Text $t -Voice $Voice | Out-Null
+      }
+      return
+    } catch {
+      Write-Host ('WINRT_FALLBACK ' + $_.Exception.Message)
+    }
+  }
   if ($SaveWav) {
     $syn.SetOutputToWaveFile($SaveWav)
     $syn.Speak($t)

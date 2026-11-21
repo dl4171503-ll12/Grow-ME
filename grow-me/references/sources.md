@@ -32,6 +32,19 @@
 
 ## 版本记录
 
+### V1.8.3（离线神经语音 + 中英混读修音）
+- 新增 `scripts/voice-piper-tts.ps1`：Piper 离线神经 TTS（`-Ensure` 自动从 hf-mirror 下模型；`-LengthScale` 调语速）。
+- 新增 `scripts/voice-hybrid-tts.ps1`：中英自动分流——中文 `zh_CN-huayan-medium` + 英文 `en_US-lessac-medium`，重采样拼接成单段 22050Hz WAV；修掉 "AI Agent 读成 爱爱进"。
+- `scripts/voice-offline.ps1` 默认引擎改为 `hybrid`（回退 piper→winrt→sapi）。
+- 模型缓存在 `%USERPROFILE%\.grow-me\tts\piper`（两个 ~63MB，不入技能包）；安装：`py -3 -m pip install piper-tts`。
+- 实测：同一句 118KB / 2.9s，中文段 huayan、英文段 lessac。
+
+### V1.8.2（换更好听的离线声音：WinRT 自然语音）
+- 新增 `scripts/voice-winrt-tts.ps1`：用 WinRT `Windows.Media.SpeechSynthesis` 调 Windows 自然语音（比 SAPI 好听），支持 `-ListVoices`、`-Voice`、`-SaveWav`、`-Rate`、`-NoPlay`。
+- `scripts/voice-offline.ps1` 默认改用 **Microsoft Yaoyao** 自然女声（`-Voice "Microsoft Kangkang"` 换男声；`-TtsEngine sapi` 可回退）。
+- 本机可用：Yaoyao(女)/Kangkang(男)/Huihui(女) zh-CN；Tracy zh-HK；Hanhan/Yating/Zhiwei zh-TW。
+- 实测：同一句「你好，我是一个 AI Agent」三个声音 WAV（Huihui 105KB/3.3s、Yaoyao 91KB/2.9s、Kangkang 88KB/2.8s）。
+
 ### V1.8.1（离线语音闭环：不接 API 也能开口）
 - 新增 `scripts/voice-offline.ps1`：Windows SAPI 离线语音壳——麦克风 → 离线识别(zh-CN) → 本地引擎 → 离线合成(zh-CN)；
   支持 `-Text` 合成留证（`-SaveWav`）、`-Loop` 连续对话、`-EngineUrl`/`-Seconds` 参数；全程不联网、不要 API Key。

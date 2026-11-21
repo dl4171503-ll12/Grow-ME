@@ -1,6 +1,6 @@
 {
   "skill_name": "grow-me",
-  "version": "V1.8.1",
+  "version": "V1.8.3",
   "notes": "改动 SKILL.md 后至少跑通前四条：落盘、追问闸门、上下文纪律、自动轮次。判定标准是看行为，不看措辞。",
   "evals": [
     {
