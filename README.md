@@ -3,7 +3,7 @@
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 一个「常驻工作协议」技能：装上即对所有动手类任务生效，不必每次点名。
 
-- 当前版本：**V1.10.0**（见 [CHANGELOG.md](CHANGELOG.md)）
+- 当前版本：**V1.10.1**（见 [CHANGELOG.md](CHANGELOG.md)）
 - 许可：[MIT](LICENSE)
 - 技能本体：[`grow-me/`](grow-me/)（`SKILL.md` + `references/` + `scripts/` + `evals/`）
 
@@ -142,7 +142,7 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File grow-me/scripts/widget.
 ```
 
 - 常驻最前、按住拖动到任意位置；位置记忆并限制在工作区（不挡任务栏）。
-- 按钮（`widget-commands.json` 可改）："中文有 bug / 继续工作 / 停一下"——点击直接作为一条消息发进当前 DSH 会话。
+- 按钮（`widget-commands.json` 可改）："说中文！/ 有 bug 重新改 / 继续工作 / 停一下: / 说大白话！"——点击直接作为一条消息发进当前 DSH 会话。
 - 麦克风：点 `Mic` 开始、再点停止 → 保存 WAV → **Windows SAPI 本地离线识别（免费、不联网）** → 结果发进会话；识别为空时发送音频路径。
 - 发送成功会用 youth 短播"已发送"；细节见 [`grow-me/references/widget.md`](grow-me/references/widget.md)。
 

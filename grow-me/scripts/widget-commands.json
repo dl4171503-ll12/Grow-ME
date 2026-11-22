@@ -1,8 +1,10 @@
 {
   "buttons": [
-    { "label": "中文有 bug", "text": "中文有 bug" },
+    { "label": "说中文！", "text": "说中文！" },
+    { "label": "有 bug 重新改", "text": "有 bug 重新改" },
     { "label": "继续工作", "text": "继续工作" },
-    { "label": "停一下", "text": "先停一下，我有事" }
+    { "label": "停一下:", "text": "停一下:" },
+    { "label": "说大白话！", "text": "说大白话！" }
   ],
   "ackVoice": "youth",
   "micSeconds": 60

@@ -18,9 +18,11 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
 
 | 按钮 | 发送内容 |
 |---|---|
-| 中文有 bug | `中文有 bug` |
+| 说中文！ | `说中文！` |
+| 有 bug 重新改 | `有 bug 重新改` |
 | 继续工作 | `继续工作` |
-| 停一下 | `先停一下，我有事` |
+| 停一下: | `停一下:` |
+| 说大白话！ | `说大白话！` |
 
 点击后：把文字放进剪贴板 → 激活 `DeepSeek Harness` 窗口 → `Ctrl+V` → `Enter`，即**直接作为一条消息发进当前会话**（DSH 没有公开的消息 API，所以用窗口级自动化；需要 DSH 窗口存在）。
 

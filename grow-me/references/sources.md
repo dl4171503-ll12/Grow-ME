@@ -32,6 +32,10 @@
 
 ## 版本记录
 
+### V1.10.1（组件条按钮按用户清单更新）
+- 按钮改为用户指定的 5 个：`说中文！` / `有 bug 重新改` / `继续工作` / `停一下:` / `说大白话！`（`widget-commands.json`）。
+- 实测重启后组件条显示 5 个按钮 + Mic + X；点击会作为消息发进 DSH 会话（剪贴板+回车）。
+
 ### V1.10.0（悬浮组件条：按钮发消息 + 麦克风本地识别）
 - 新增 `scripts/widget.ps1`：WPF 悬浮条（Topmost、可拖拽、位置记忆并限制在工作区不挡任务栏）；命令按钮读取 `widget-commands.json`，点击经"激活 DSH 窗口 + 剪贴板粘贴 + 回车"把消息直接发进会话。
 - 新增 `scripts/widget-native.ps1`（winmm 录音：16k/16bit/单声道）与 `scripts/widget-asr.ps1`（SAPI 本地离线识别）。
