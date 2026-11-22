@@ -32,6 +32,12 @@
 
 ## 版本记录
 
+### V1.10.0（悬浮组件条：按钮发消息 + 麦克风本地识别）
+- 新增 `scripts/widget.ps1`：WPF 悬浮条（Topmost、可拖拽、位置记忆并限制在工作区不挡任务栏）；命令按钮读取 `widget-commands.json`，点击经"激活 DSH 窗口 + 剪贴板粘贴 + 回车"把消息直接发进会话。
+- 新增 `scripts/widget-native.ps1`（winmm 录音：16k/16bit/单声道）与 `scripts/widget-asr.ps1`（SAPI 本地离线识别）。
+- 麦克风流程：点 Mic 开始/停止 → 存 WAV → 本地 ASR → 发送；识别为空则发送音频路径；发送成功用 youth 短播"已发送"。
+- 新增规则十二与 `references/widget.md`；实测录音 2 秒 WAV 63938B、SAPI 识别"你好测试语音识别"成功，组件条已在桌面常驻显示。
+
 ### V1.9.7（自身音量拉满：22% 系统音量下也清楚）
 - 新增 `scripts/voice-loudness.py`：语音响度最大化（向上压缩 0.92 次幂、tanh 软限幅、峰值归一到 0.98）；`voice-edge-tts.ps1` 合成后**自动**处理（`-NoLoud` 可关）。
 - `voice-notify.ps1` 播报前自动**取消静音**（不动系统音量）；`audio-env.ps1` 支持只 `-Unmute`。

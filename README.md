@@ -3,7 +3,7 @@
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 一个「常驻工作协议」技能：装上即对所有动手类任务生效，不必每次点名。
 
-- 当前版本：**V1.9.7**（见 [CHANGELOG.md](CHANGELOG.md)）
+- 当前版本：**V1.10.0**（见 [CHANGELOG.md](CHANGELOG.md)）
 - 许可：[MIT](LICENSE)
 - 技能本体：[`grow-me/`](grow-me/)（`SKILL.md` + `references/` + `scripts/` + `evals/`）
 
@@ -19,8 +19,9 @@
 | 不知道 AI 有没有在说谎、是不是在浪费上下文/token | 规则九 只读监测台（8176 + 定位仪 + 说谎程度 + 浪费率） |
 | 想给 AI 加实时语音/多轮对话能力 | 规则十 实时语音 Agent（LiveKit Agents 等价：轮次检测/打断/工具/事件） |
 | 任务做完了但你不在窗口、没人提醒 | 规则十一 完成语音播报（白话摘要 + 前台感知 + Edge 神经语音/离线回退） |
+| 想随手发指令、说一句就走 | 规则十二 悬浮组件条（常驻最前 + 按钮发消息 + 麦克风本地识别） |
 
-## 十一条规则
+## 十二条规则
 
 1. **自动落盘**：先建 `.grow-me/<日期>-<slug>.md` 七节工作记录，再动手；长输出落 `logs/`，交付物先成文件。
 2. **上下文纪律**：先检索后精读、单次 ≤200 行、有目的才读、已读不重读、不 echo 大段内容。
@@ -33,6 +34,7 @@
 9. **监测台与定位仪**：接手后立刻起只读监测台（默认 `127.0.0.1:8176`，占用自动 +1）→ 扫描本机 AI → 给自己装定位仪（`beacon.mjs`）上报心跳、声明与证据、**实时消耗（tokens/浪费/上下文占用）**；**只观察"谁在线、说谎程度多高、浪费了多少上下文和 token"，不控制任何 AI**。持证 = 装了 grow-me 且版本一致。
 10. **实时语音 Agent**：需要语音/实时对话时，用 vendor 的上游 `livekit/agents` 源码 + 本 skill 的零依赖等价运行时（`voice-agent.mjs`：AgentSession 生命周期、轮次检测、打断、工具调用、插件化 STT-LLM-TTS、事件钩子、转写与延迟指标）；不含 WebRTC/电话，生产级直接用上游 + LiveKit 服务器。
 11. **完成语音播报**：每个任务完成先写一份 1–2 句白话摘要到 `.grow-me/voice/`，再用 `voice-notify.ps1` 用 Edge 神经语音朗读；用户不在本窗口时自动加"提醒："并重复 2 遍；Edge 不可用回退离线 Piper。
+12. **悬浮组件条**：`widget.ps1` 常驻最前、可拖拽、不挡任务栏；按钮把固定消息直接发进 DSH 会话；麦克风录音后用 Windows SAPI 本地离线识别并发送（识别为空则带上音频路径）。
 
 ## 安装
 
@@ -133,6 +135,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File grow-me/scripts/voice-notify
 - 脚本检测前台窗口：**用户不在本窗口** → 加"提醒："并重复 2 遍；在窗口 → 只说 1 遍；回执是 JSON 并写入 `~/.grow-me/voice/notify.jsonl`。
 - 换声音：`-Voice zh-CN-YunxiNeural`；语速 `-Rate +10%`；重复次数 `-RepeatBackground 3`。
 
+## 悬浮组件条（规则十二）
+
+```powershell
+powershell -STA -NoProfile -ExecutionPolicy Bypass -File grow-me/scripts/widget.ps1
+```
+
+- 常驻最前、按住拖动到任意位置；位置记忆并限制在工作区（不挡任务栏）。
+- 按钮（`widget-commands.json` 可改）："中文有 bug / 继续工作 / 停一下"——点击直接作为一条消息发进当前 DSH 会话。
+- 麦克风：点 `Mic` 开始、再点停止 → 保存 WAV → **Windows SAPI 本地离线识别（免费、不联网）** → 结果发进会话；识别为空时发送音频路径。
+- 发送成功会用 youth 短播"已发送"；细节见 [`grow-me/references/widget.md`](grow-me/references/widget.md)。
+
 ## 自动测试轮次（规则七）
 
 说「**你可以自动化测试几轮**」= 同时放行，不再每轮问。每轮产物写 `.grow-me/rounds/<slug>-rN.md`（提交物 / 验收命令 / 自审发现 / 自试发现 / 修法择优），最后给轮次汇总表。
@@ -144,8 +157,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File grow-me/scripts/voice-notify
 Grow-ME/
 ├── grow-me/                  # 技能本体（复制这个目录到 ~/.agents/skills/）
 │   ├── SKILL.md
-│   ├── references/           # 追问/五维/落盘/轮次/总线/监测台/训练/语音 Agent/语音播报/来源
-│   ├── scripts/              # console、beacon、scan-ai、bus、voice-agent、voice-offline、voice-notify、validate-skill 等
+│   ├── references/           # 追问/五维/落盘/轮次/总线/监测台/训练/语音 Agent/语音播报/组件条/来源
+│   ├── scripts/              # console、beacon、scan-ai、bus、voice-agent、voice-offline、voice-notify、widget、validate-skill 等
 │   ├── vendor/livekit-agents # 上游 livekit/agents 核心源码 + 语音示例（Apache-2.0，见 SOURCE.md）
 │   ├── evals/evals.json      # 回归用例
 │   └── LICENSE

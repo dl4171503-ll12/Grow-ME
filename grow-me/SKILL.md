@@ -10,12 +10,12 @@ description: >-
   接手后会先起本地监测台（默认端口 8176）、扫描本机已装 AI，并用定位仪上报心跳与证据。本 skill 装上后，即使没点名，动代码/跑命令前也应遵守本协议。
 license: MIT
 metadata:
-  version: V1.9.7
+  version: V1.10.0
   kind: policy
   maturity: stable
 ---
 
-# Grow Me — V1.9.7
+# Grow Me — V1.10.0
 
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 常驻模式：装上即对所有动手类任务生效，不必每次点名。
@@ -216,13 +216,23 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 - 调参：`-Voice zh-CN-YunxiNeural`（男声）、`-Rate +10%`、`-RepeatBackground 3`；模板与例子见
   [references/voice-report.md](references/voice-report.md)
 
-## 12. 红线
+## 12. 规则十二：悬浮组件条（常驻最前、按钮 + 语音）
+
+需要"随手发指令 / 说一句就走"时用悬浮组件条：
+
+- 启动：`powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1`（WPF，Topmost 可拖拽，位置记忆并限制在工作区、不挡任务栏）；
+- 按钮：读 `scripts/widget-commands.json`（默认"中文有 bug / 继续工作 / 停一下"），点击把文字**直接发进 DSH 会话**（剪贴板 + Enter；DSH 无公开消息 API，走窗口级自动化）；
+- 麦克风：点 `Mic` 开始、再点停止 → 保存 WAV → `widget-asr.ps1` 用 **Windows SAPI 本地离线识别（免费、不联网）** → 结果发进会话；识别为空则发送音频路径；
+- 播报：发送成功用 youth 短播"已发送"；任务收尾仍按规则十一用白话播报；
+- 细节与局限：[references/widget.md](references/widget.md)
+
+## 13. 红线
 
 **反偷懒**：不留 TODO/占位符/省略号；不把活推回用户；没跑过不说"通过"；不拿形容词当交付；不缩范围；发现更大问题只记录。
 
 **反空转（省积分）**：计划只写一次、不复述；不重复读文件、不重跑命令；单步思考只写结论；不加非必要验证；不为显得勤奋多跑命令。
 
-## 13. 说"完成"前自检
+## 14. 说"完成"前自检
 
 - [ ] `.grow-me/` 记录存在且七节齐全（至少：目标/事实/验证/下一步），头部有工作根与产物路径
 - [ ] 每条验收都有证据，且证据是真实命令输出或 `路径:行号`
@@ -246,6 +256,8 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 - [references/console.md](references/console.md) — 控制台：8176 端口策略、API、证据台账、loss 工作台、备份清单
 - [references/minmind-training.md](references/minmind-training.md) — minmind 预训练工作台：6 阶段 × 3 子阶段、checkpoint、8.76 瞎猜线、概念解释
 - [references/livekit-agents.md](references/livekit-agents.md) — 实时语音 Agent：LiveKit Agents 能力映射、本地运行时用法、许可与边界
+- [references/widget.md](references/widget.md) — 悬浮组件条：启动、按钮配置、录音/本地 ASR、发送与局限
+- `scripts/widget.ps1` + `scripts/widget-native.ps1` + `scripts/widget-asr.ps1` + `scripts/widget-commands.json` — 组件条与语音录入
 - [references/voice-report.md](references/voice-report.md) — 任务完成语音播报：白话摘要模板、前台感知、Edge/离线回退、调参
 - `scripts/voice-edge-tts.ps1` — Edge 神经语音（在线免 Key）合成与播放
 - `scripts/voice-notify.ps1` — 任务完成播报（白话摘要 + 前台检测 + 自动重复）

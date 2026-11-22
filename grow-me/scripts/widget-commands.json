@@ -1,0 +1,9 @@
+{
+  "buttons": [
+    { "label": "中文有 bug", "text": "中文有 bug" },
+    { "label": "继续工作", "text": "继续工作" },
+    { "label": "停一下", "text": "先停一下，我有事" }
+  ],
+  "ackVoice": "youth",
+  "micSeconds": 60
+}
