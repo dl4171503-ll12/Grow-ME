@@ -10,12 +10,12 @@ description: >-
   接手后会先起本地监测台（默认端口 8176）、扫描本机已装 AI，并用定位仪上报心跳与证据。本 skill 装上后，即使没点名，动代码/跑命令前也应遵守本协议。
 license: MIT
 metadata:
-  version: V1.10.4
+  version: V1.10.5
   kind: policy
   maturity: stable
 ---
 
-# Grow Me — V1.10.4
+# Grow Me — V1.10.5
 
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 常驻模式：装上即对所有动手类任务生效，不必每次点名。
@@ -221,7 +221,7 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 需要"随手发指令 / 说一句就走"时用悬浮组件条：
 
 - 启动：`powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1`（WPF，Topmost 可拖拽，位置记忆并限制在工作区、不挡任务栏）；
-- 按钮：读 `scripts/widget-commands.json`（默认"说中文！/ 有 bug 重新改 / 继续工作 / 停一下: / 说大白话！"），点击把文字**直接发进 DSH 会话**（剪贴板 + Enter；DSH 无公开消息 API，走窗口级自动化）；
+- 按钮：读 `scripts/widget-commands.json`（默认"说中文！/ 有 bug 重新改 / 继续工作 / 停一下: / 说大白话！"），点击把文字**只发进当前激活的 DSH 会话窗口**（前台 DSH > 最近前台 DSH > 第一个；发送前聚焦该窗口输入区；DSH 无公开消息 API，走窗口级自动化）；
 - 麦克风：点 `Mic` 开始、再点停止 → 保存 WAV → `widget-asr.ps1` 用 **Windows SAPI 本地离线识别（免费、不联网）** → 结果发进会话；识别为空则发送音频路径；
 - 播报：发送成功用 youth 短播"已发送"；任务收尾仍按规则十一用白话播报；
 - 细节与局限：[references/widget.md](references/widget.md)

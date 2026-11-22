@@ -39,22 +39,55 @@ function Write-WLog([string]$m) {
 }
 Write-WLog 'widget start'
 
-function Get-HarnessHandle {
-  $procs = Get-Process -Name 'DeepSeek Harness' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 }
-  if ($procs) { return ($procs | Select-Object -First 1).MainWindowHandle }
-  return [IntPtr]::Zero
+function Get-DshWindows {
+  $dshPids = @{}
+  Get-Process -Name 'DeepSeek Harness' -ErrorAction SilentlyContinue | ForEach-Object { $dshPids[$_.Id] = $true }
+  $list = @()
+  foreach ($line in [GmWin]::Windows()) {
+    $parts = $line -split '\|', 3
+    if ($parts.Count -lt 3) { continue }
+    $wpid = [int]$parts[1]
+    if (-not $dshPids.ContainsKey($wpid)) { continue }
+    $list += [pscustomobject]@{ hwnd = [IntPtr]([int64]$parts[0]); title = $parts[2]; pid = $wpid }
+  }
+  return $list
+}
+
+function Get-HarnessWindow {
+  $wins = Get-DshWindows
+  if (-not $wins -or $wins.Count -eq 0) { return $null }
+  $fg = [GmWin]::GetForegroundWindow()
+  $hit = $wins | Where-Object { $_.hwnd -eq $fg } | Select-Object -First 1
+  if ($hit) { return $hit }
+  if ($script:dshLast -and $script:dshLast -ne [IntPtr]::Zero) {
+    $hit = $wins | Where-Object { $_.hwnd -eq $script:dshLast } | Select-Object -First 1
+    if ($hit) { return $hit }
+  }
+  return ($wins | Select-Object -First 1)
 }
 
 function Send-Harness([string]$text, [switch]$DryRun) {
-  $h = Get-HarnessHandle
-  if ($h -eq [IntPtr]::Zero) { Write-WLog 'send: no harness window'; return $false }
-  if ($DryRun) { Write-WLog ('send dryrun: ' + $text); return $true }
+  $t = Get-HarnessWindow
+  if (-not $t) { Write-WLog 'send: no harness window'; return $false }
+  if ($DryRun) { Write-WLog ('send dryrun to [' + $t.title + ']'); return $true }
   try {
-    [void][GmWin]::ShowWindow($h, 9)
-    [void][GmWin]::SetForegroundWindow($h)
-    Start-Sleep -Milliseconds 300
+    [void][GmWin]::ShowWindow($t.hwnd, 9)
+    [void][GmWin]::SetForegroundWindow($t.hwnd)
+    Start-Sleep -Milliseconds 350
     $fg = [GmWin]::GetForegroundWindow()
-    if ($fg -ne $h) { Write-WLog ('focus mismatch fg=' + $fg + ' target=' + $h) }
+    if ($fg -ne $t.hwnd) { Write-WLog ('focus mismatch fg=' + $fg + ' target=' + $t.hwnd) }
+    # click into this conversation's input box (bottom-centre) so it does not go elsewhere
+    $r = [GmWin+RECT]::new()
+    if ([GmWin]::GetWindowRect($t.hwnd, [ref]$r)) {
+      $cx = $r.L + [int](($r.R - $r.L) / 2)
+      $cy = $r.B - 80
+      [void][GmWin]::SetCursorPos($cx, $cy)
+      Start-Sleep -Milliseconds 150
+      [GmWin]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero)
+      Start-Sleep -Milliseconds 60
+      [GmWin]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero)
+      Start-Sleep -Milliseconds 250
+    }
     $okClip = $false
     for ($i = 0; $i -lt 3 -and -not $okClip; $i++) {
       try { [System.Windows.Forms.Clipboard]::SetText($text); $okClip = $true }
@@ -66,7 +99,7 @@ function Send-Harness([string]$text, [switch]$DryRun) {
     Start-Sleep -Milliseconds 220
     [System.Windows.Forms.SendKeys]::SendWait('{ENTER}')
     Start-Sleep -Milliseconds 250
-    Write-WLog ('sent: ' + $text)
+    Write-WLog ('sent to [' + $t.title + ']: ' + $text)
     return $true
   } catch {
     Write-WLog ('send error: ' + $_.Exception.Message)
@@ -99,10 +132,8 @@ $wa = $screen.WorkingArea
 $baseX = [Math]::Max($wa.Left, [Math]::Min($baseX, $wa.Right - 380))
 $baseY = [Math]::Max($wa.Top, [Math]::Min($baseY, $wa.Bottom - 90))
 
+# always start collapsed (the ball is the default; expanded state is not persisted on purpose)
 $collapsedDefault = $true
-if (Test-Path $stateFile) {
-  try { $st = Get-Content -Raw $stateFile | ConvertFrom-Json; if ($null -ne $st.collapsed) { $collapsedDefault = [bool]$st.collapsed } } catch {}
-}
 
 function Save-Pos {
   try {
@@ -274,7 +305,8 @@ $exitItem.Add_Click({
 [void]$menu.Items.Add($exitItem)
 $rootBorder.ContextMenu = $menu
 
-# keep-on-top watchdog + follow active virtual desktop
+# keep-on-top watchdog + follow active virtual desktop + remember last DSH window
+$script:dshLast = [IntPtr]::Zero
 $script:watchLogged = $false
 $script:topTimer = New-Object System.Windows.Threading.DispatcherTimer
 $script:topTimer.Interval = [TimeSpan]::FromMilliseconds(1200)
@@ -284,9 +316,12 @@ $script:topTimer.Add_Tick({
       if ($hwnd -eq [IntPtr]::Zero) { return }
       [void][GmWin]::SetWindowPos($hwnd, [IntPtr](-1), 0, 0, 0, 0, 0x0013)
       [void][GmVd]::FollowCurrent($hwnd)
+      $fg = [GmWin]::GetForegroundWindow()
+      $wins = Get-DshWindows
+      if ($wins | Where-Object { $_.hwnd -eq $fg }) { $script:dshLast = $fg }
       if (-not $script:watchLogged) {
         $script:watchLogged = $true
-        Write-WLog ('watchdog: topmost=' + [GmVd]::IsTopmost($hwnd) + ' vd=' + [GmVd]::Status($hwnd))
+        Write-WLog ('watchdog: topmost=' + [GmVd]::IsTopmost($hwnd) + ' vd=' + [GmVd]::Status($hwnd) + ' dsh_windows=' + @($wins).Count)
       }
     } catch {}
   })

@@ -5,6 +5,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 
 public static class GmRec {
   [StructLayout(LayoutKind.Sequential)]
@@ -86,6 +87,26 @@ public static class GmWin {
   [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
   [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
   [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h, int index);
+  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+  [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+  [DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr extra);
+  [StructLayout(LayoutKind.Sequential)] public struct RECT { public int L, T, R, B; }
+  public delegate bool EnumWindowsProc(IntPtr h, IntPtr l);
+  [DllImport("user32.dll")] public static extern bool EnumWindows(EnumWindowsProc cb, IntPtr l);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
+  [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+  public static List<string> Windows() {
+    var list = new List<string>();
+    EnumWindows((h, l) => {
+      if (IsWindowVisible(h)) {
+        var sb = new StringBuilder(512); GetWindowText(h, sb, 512);
+        if (sb.Length > 0) { uint pid; GetWindowThreadProcessId(h, out pid); list.Add(h.ToInt64() + "|" + pid + "|" + sb.ToString()); }
+      }
+      return true;
+    }, IntPtr.Zero);
+    return list;
+  }
 }
 
 [ComImport, Guid("AA509086-5CA9-4C25-8F95-589D3C07B48A")]
