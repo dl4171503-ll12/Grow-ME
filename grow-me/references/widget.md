@@ -63,6 +63,14 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
 
 注意：这是**窗口级**定向；同一窗口里的多个会话标签页以 DSH 当前激活的那个为准（不替你切换标签）。
 
+## 单实例（永远只保留最新，V1.10.6）
+
+- **每次启动都会先清掉所有旧组件条进程**（按命令行 `-File ...\widget.ps1` 精确匹配，不会误杀别的 PowerShell），然后抢命名互斥锁 `Local\GrowMeWidgetSingleton`；抢到才继续启动。
+- 启动时写 `~/.grow-me/widget/instance.json`（pid + buildHash + 启动时间）；`buildHash` = `widget.ps1 + widget-native.ps1 + widget-commands.json` 的 SHA256。
+- 所以只要**内容有改动**（改脚本/改按钮配置）再启动一次，旧版会被立刻关掉、由新版覆盖；重复启动也只会留下一个。
+- 清理遗留实例：`powershell -File tools/widget-kill.ps1`（kit 工具）；查看数量：`tools/widget-count.ps1`。
+- 已处理“旧进程被强杀后互斥锁变成 Abandoned”的情况（捕获 `AbandonedMutexException` 视为拿到锁）。
+
 ## 故障排查
 
 - 点按钮没反应 / 组件条消失过：先看日志 `~/.grow-me/widget/widget.log`（V1.10.2 起所有按钮/录音异常都写日志，不再崩掉整个组件条）。

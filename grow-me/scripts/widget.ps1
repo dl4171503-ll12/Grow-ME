@@ -12,6 +12,7 @@ $root = Join-Path $env:USERPROFILE '.grow-me\widget'
 $recDir = Join-Path $root 'rec'
 $posFile = Join-Path $root 'pos.json'
 $stateFile = Join-Path $root 'state.json'
+$instanceFile = Join-Path $root 'instance.json'
 New-Item -ItemType Directory -Force -Path $recDir | Out-Null
 $cmdFile = Join-Path $PSScriptRoot 'widget-commands.json'
 $cfg = $null
@@ -39,6 +40,32 @@ function Write-WLog([string]$m) {
 }
 Write-WLog 'widget start'
 
+# ---------------- single instance: keep only the newest widget ----------------
+$buildHash = ''
+try {
+  $parts = @()
+  foreach ($f in @((Join-Path $PSScriptRoot 'widget.ps1'), (Join-Path $PSScriptRoot 'widget-native.ps1'), (Join-Path $PSScriptRoot 'widget-commands.json'))) {
+    if (Test-Path $f) { $parts += (Get-FileHash -Algorithm SHA256 $f).Hash } else { $parts += 'missing' }
+  }
+  $buildHash = (Get-FileHash -Algorithm SHA256 -InputStream ([IO.MemoryStream]::new([Text.Encoding]::UTF8.GetBytes(($parts -join '|'))))).Hash
+} catch { $buildHash = 'unknown' }
+
+$mutex = New-Object System.Threading.Mutex($false, 'Local\GrowMeWidgetSingleton')
+# newest wins: kill every other widget process (match by script path, not window title)
+$others = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { $_.CommandLine -match '-File\s+.*widget\.ps1' -and $_.ProcessId -ne $PID }
+foreach ($o in $others) { try { Stop-Process -Id $o.ProcessId -Force -ErrorAction Stop; Write-WLog ('killed old widget pid=' + $o.ProcessId) } catch {} }
+if ($others) { Start-Sleep -Milliseconds 800 }
+$haveLock = $false
+$deadline = (Get-Date).AddSeconds(12)
+while (-not $haveLock -and (Get-Date) -lt $deadline) {
+  try { $haveLock = $mutex.WaitOne(600) }
+  catch [System.Threading.AbandonedMutexException] { $haveLock = $true }
+  catch { Start-Sleep -Milliseconds 300 }
+}
+if (-not $haveLock) { Write-WLog 'cannot get widget singleton lock; exit'; exit 0 }
+$instData = @{ pid = $PID; buildHash = $buildHash; started = (Get-Date).ToString('o') } | ConvertTo-Json -Compress
+Set-Content -Path $instanceFile -Value $instData -Encoding UTF8
+Write-WLog ('singleton acquired pid=' + $PID + ' hash=' + $buildHash.Substring(0, 12))
 function Get-DshWindows {
   $dshPids = @{}
   Get-Process -Name 'DeepSeek Harness' -ErrorAction SilentlyContinue | ForEach-Object { $dshPids[$_.Id] = $true }
@@ -194,6 +221,11 @@ $micBtn = $win.FindName('MicBtn')
 $status = $win.FindName('Status')
 $minBtn = $win.FindName('MinBtn')
 $win.Topmost = $true
+$win.Add_Closed({
+    try { if ($script:haveLock) { $mutex.ReleaseMutex() } } catch {}
+    try { if (Test-Path $instanceFile) { Remove-Item -LiteralPath $instanceFile -Force } } catch {}
+    Write-WLog 'widget closed'
+  })
 
 function Set-Collapsed([bool]$collapsed) {
   if ($collapsed) {

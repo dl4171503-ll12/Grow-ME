@@ -3,6 +3,12 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.6 — 组件条单实例（永远只保留最新）
+
+- 启动先结束所有旧实例（命令行精确匹配 `-File ...widget.ps1`，不误杀其他 PowerShell），再抢 `Local\GrowMeWidgetSingleton`（处理 AbandonedMutexException）。
+- `instance.json` 记录 pid + buildHash（widget.ps1/native/commands 的 SHA256）；内容改动后再启动立即替换旧版。
+- 实测：旧 23700 被结束，新 24368 持有锁，实例数=1。
+
 ## V1.10.5 — 组件条定向发送 + 默认恒为小球
 
 - 目标窗口：前台 DSH > 最近前台过的 DSH（每 1.2s 记录）> 第一个 DSH；只操作一个窗口，不群发。

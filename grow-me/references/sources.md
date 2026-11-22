@@ -32,6 +32,11 @@
 
 ## 版本记录
 
+### V1.10.6（组件条单实例：永远只保留最新）
+- 启动时按命令行 `-File ...widget.ps1` 精确匹配并结束所有旧实例，再抢命名互斥锁 `Local\GrowMeWidgetSingleton`（处理 AbandonedMutexException）；`instance.json` 记录 pid + buildHash。
+- buildHash = `widget.ps1 + widget-native.ps1 + widget-commands.json` 的 SHA256；内容变化后再启动会立刻替换旧版。
+- 实测：旧 pid 23700 被新进程结束 → 新 pid 24368 持有锁，实例数=1；重复启动不再叠加。
+
 ### V1.10.5（组件条定向发送 + 默认恒为小球）
 - 目标窗口选择：前台 DSH 窗口 > 最近一次前台过的 DSH 窗口（看门狗每 1.2s 记录）> 第一个 DSH 窗口；只激活/操作一个窗口，不群发。
 - 发送前点击目标窗口底部居中输入区聚焦，再粘贴 + 回车；日志 `sent to [窗口标题]: 内容`。
