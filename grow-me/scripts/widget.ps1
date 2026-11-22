@@ -164,7 +164,24 @@ function Speak-Ack([string]$text) {
 }
 
 function Run-Asr([string]$wav) {
-  # 1) Whisper (local, offline, much better Chinese accuracy)
+  # 1) SenseVoice (sherpa-onnx, Chinese-optimised, best local accuracy)
+  $sv = Join-Path $PSScriptRoot 'asr-sensevoice.py'
+  $svDir = Join-Path $env:USERPROFILE '.grow-me\asr\sensevoice'
+  if ((Test-Path $sv) -and (Test-Path (Join-Path $svDir 'model.int8.onnx'))) {
+    try {
+      $out = & py -3 -X utf8 $sv $wav $svDir 2>&1
+      $line = ($out | Where-Object { $_ -like 'ASR_TEXT *' } | Select-Object -First 1)
+      if ($line) {
+        $text = ($line -replace '^ASR_TEXT ', '').Trim()
+        Write-WLog ('asr(sensevoice): ' + $text)
+        return $text
+      }
+      Write-WLog 'asr(sensevoice): empty'
+    } catch {
+      Write-WLog ('asr(sensevoice) error: ' + $_.Exception.Message)
+    }
+  }
+  # 2) Whisper (local, offline fallback)
   $whisper = Join-Path $PSScriptRoot 'asr-whisper.py'
   $modelDir = Join-Path $env:USERPROFILE '.grow-me\asr\faster-whisper-base'
   if ((Test-Path $whisper) -and (Test-Path (Join-Path $modelDir 'model.bin'))) {
@@ -181,7 +198,7 @@ function Run-Asr([string]$wav) {
       Write-WLog ('asr(whisper) error: ' + $_.Exception.Message)
     }
   }
-  # 2) SAPI fallback (raw -> peak -> compressed)
+  # 3) SAPI fallback (raw -> peak -> compressed)
   $asr = Join-Path $PSScriptRoot 'widget-asr.ps1'
   if (-not (Test-Path $asr)) { return '' }
   function Try-Asr([string]$target, [string]$tag) {

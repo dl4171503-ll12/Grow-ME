@@ -84,16 +84,18 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
 - 麦克风状态：`audio-env.ps1 -Capture` 查看默认麦克风音量/静音，`-Capture -SetVolume -Level 1.0 -Unmute` 拉满。
 - 局限：Windows SAPI 离线识别是中小模型，长句/口音/嘈杂环境准确率一般；要更高准确率可换在线 ASR（需 API）或 Whisper（本地大模型，需额外安装）。
 
-## 语音识别（V1.10.8：默认换成本地 Whisper）
+## 语音识别（V1.10.10：SenseVoice 为主）
 
-- **默认识别引擎：faster-whisper（离线、CPU、int8）**，中文准确率远高于 Windows SAPI；
-  模型 `base` 放在 `%USERPROFILE%\.grow-me\asr\faster-whisper-base`（约 138 MB）。
-- 安装/换模型：`powershell -File scripts/asr-setup.ps1 -Model base|small`（自动 pip 安装 + 从 hf-mirror 下模型）。
-- 识别链路：Whisper 优先 → 失败才回退 Windows SAPI（raw/peak/压缩三连）；日志写 `asr(whisper): 文字`。
-- 实测对比（同一段 9.4s 录音）：
-  - SAPI：`我现在正在涌现`
-  - Whisper：`我现在正在用这个控制条尝试录音你能不能听到?`（含模型加载总耗时约 2.8s）
-- 局限：Whisper base 对很快/很轻的口音仍会错几个字；要更准可换 `small`（约 466 MB，慢一些）。
+识别顺序：**SenseVoice（sherpa-onnx，中文优化）→ faster-whisper → Windows SAPI**。
+
+- SenseVoice 模型 `model.int8.onnx`（约 228 MB）+ `tokens.txt`，放在 `%USERPROFILE%\.grow-me\asr\sensevoice`；
+  安装：`powershell -File scripts/asr-setup.ps1`（pip sherpa-onnx + hf-mirror 下模型）。
+- Whisper base（约 138 MB）作为第二兜底；`asr-setup.ps1 -Engine whisper -Model base`。
+- **实测对比**（同一段用户录音“现在这个语音识别真的没有问题了吗？”）：
+  - Whisper base：`现在这个云时边真的没有问题了吗谢谢`（把词听成了“云时边/硬盘”）
+  - SenseVoice：`现在这个语音识别真的没有问题了吗？` ✅
+  - 耗时约 2.0s（8.6s 音频）
+- 日志写 `asr(sensevoice): …` / `asr(whisper): …` / `asr(raw|peak|compressed): …`。
 
 ## 故障排查
 

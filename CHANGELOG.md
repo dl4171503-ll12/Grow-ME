@@ -3,6 +3,13 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.10 — 语音识别换成 SenseVoice（中文不再瞎猜）
+
+- Whisper base 会把「语音识别」听成「云硬盘/云时边」；SenseVoice 对同一句完全正确。
+- 新增 asr-sensevoice.py（sherpa-onnx，int8 CPU，use_itn），模型 228MB；ASR 顺序改为 SenseVoice → Whisper → SAPI。
+- asr-setup.ps1 支持 -Engine sensevoice|whisper。
+- 实测同一段 8.6s 录音：Whisper「现在这个云时边真的没有问题了吗谢谢」→ SenseVoice「现在这个语音识别真的没有问题了吗？」（约 2.0s）。
+
 ## V1.10.9 — 修 Whisper 识别文字乱码（UTF-8 管道）
 
 - 问题：Python → PowerShell 管道按系统代码页解码，Whisper 结果变乱码并发进聊天。
