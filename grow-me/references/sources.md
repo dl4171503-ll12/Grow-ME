@@ -32,6 +32,12 @@
 
 ## 版本记录
 
+### V1.10.8（语音识别换成本地 Whisper，中文准确率大幅提升）
+- 默认 ASR 改为 **faster-whisper base**（离线 CPU int8，模型 138 MB 存于 `~/.grow-me/asr/faster-whisper-base`）；SAPI 降级为兜底。
+- 新增 `scripts/asr-whisper.py`（soundfile 读 WAV + 重采样 + zh transcribe + VAD）与 `scripts/asr-setup.ps1`（pip 安装 + hf-mirror 下模型）。
+- 实测同一段 9.4s 录音：SAPI「我现在正在涌现」→ Whisper「我现在正在用这个控制条尝试录音你能不能听到?」；总耗时约 2.8s。
+- 注：模型文件不入技能包，首次用 `asr-setup.ps1` 下载。
+
 ### V1.10.7（组件条为什么“没用”：跨桌面目标修复 + 录音自动增益 + ASR 三连）
 - 根因：DSH 窗口在另一虚拟桌面（DWM cloaked=2），SetForegroundWindow 失败，点击/粘贴落到 Edge；日志却写 sent。
 - 修复：发送前 `IVirtualDesktopManager.FollowCurrent` 把 DSH 拉到当前桌面 → 激活 → 校验前台句柄=目标，否则中止并记 `abort: target not foreground`。

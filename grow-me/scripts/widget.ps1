@@ -155,6 +155,24 @@ function Speak-Ack([string]$text) {
 }
 
 function Run-Asr([string]$wav) {
+  # 1) Whisper (local, offline, much better Chinese accuracy)
+  $whisper = Join-Path $PSScriptRoot 'asr-whisper.py'
+  $modelDir = Join-Path $env:USERPROFILE '.grow-me\asr\faster-whisper-base'
+  if ((Test-Path $whisper) -and (Test-Path (Join-Path $modelDir 'model.bin'))) {
+    try {
+      $out = & py -3 -X utf8 $whisper $wav $modelDir 2>&1
+      $line = ($out | Where-Object { $_ -like 'ASR_TEXT *' } | Select-Object -First 1)
+      if ($line) {
+        $text = ($line -replace '^ASR_TEXT ', '').Trim()
+        Write-WLog ('asr(whisper): ' + $text)
+        return $text
+      }
+      Write-WLog 'asr(whisper): empty'
+    } catch {
+      Write-WLog ('asr(whisper) error: ' + $_.Exception.Message)
+    }
+  }
+  # 2) SAPI fallback (raw -> peak -> compressed)
   $asr = Join-Path $PSScriptRoot 'widget-asr.ps1'
   if (-not (Test-Path $asr)) { return '' }
   function Try-Asr([string]$target, [string]$tag) {
@@ -169,7 +187,6 @@ function Run-Asr([string]$wav) {
   }
   $text = Try-Asr $wav 'raw'
   if ($text) { return $text }
-  # quiet mic recordings are the main cause of empty SAPI results: try peak-normalised, then compressed
   $loud = Join-Path $PSScriptRoot 'voice-loudness.py'
   if (Test-Path $loud) {
     $peakWav = $wav -replace '\.wav$', '-peak.wav'
@@ -185,7 +202,7 @@ function Run-Asr([string]$wav) {
       if ($text) { return $text }
     }
   }
-  Write-WLog 'asr: empty (raw/peak/compressed all failed)'
+  Write-WLog 'asr: empty (whisper+sapi all failed)'
   return ''
 }
 

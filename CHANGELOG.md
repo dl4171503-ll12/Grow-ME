@@ -3,6 +3,12 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.8 — 语音识别换成本地 Whisper
+
+- 默认 ASR 改为 faster-whisper base（离线 CPU int8，模型 ~138MB，存 `%USERPROFILE%\.grow-me\asr\faster-whisper-base`）；SAPI 仅作兜底。
+- 新增 `scripts/asr-whisper.py` 与 `scripts/asr-setup.ps1`（pip 安装 + hf-mirror 下模型）。
+- 实测同一段 9.4s 录音：SAPI「我现在正在涌现」→ Whisper「我现在正在用这个控制条尝试录音你能不能听到?」，约 2.8s。
+
 ## V1.10.7 — 组件条按钮/语音“没用”修复（跨桌面 + 录音增益 + ASR 三连）
 
 - 根因：DSH 窗口在另一虚拟桌面（DWM cloaked），激活失败导致点击/粘贴落到 Edge；修复为先把 DSH 拉到当前桌面并校验前台句柄，否则中止。
