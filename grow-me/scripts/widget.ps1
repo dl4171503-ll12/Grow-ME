@@ -109,19 +109,15 @@ function Send-Harness([string]$text, [switch]$DryRun) {
   try {
     # the DSH window may live on another virtual desktop (DWM cloaked) -> bring it here first
     [void][GmVd]::FollowCurrent($t.hwnd)
-    Start-Sleep -Milliseconds 150
-    [void][GmWin]::ShowWindow($t.hwnd, 9)
-    [void][GmWin]::SetForegroundWindow($t.hwnd)
-    Start-Sleep -Milliseconds 400
-    $fg = [GmWin]::GetForegroundWindow()
-    if ($fg -ne $t.hwnd) {
+    Start-Sleep -Milliseconds 200
+    $okFocus = $false
+    for ($i = 0; $i -lt 3 -and -not $okFocus; $i++) {
+      if ([GmWin]::ForceForeground($t.hwnd)) { $okFocus = $true; break }
       [void][GmVd]::FollowCurrent($t.hwnd)
-      Start-Sleep -Milliseconds 250
-      [void][GmWin]::SetForegroundWindow($t.hwnd)
-      Start-Sleep -Milliseconds 400
-      $fg = [GmWin]::GetForegroundWindow()
+      Start-Sleep -Milliseconds 300
     }
-    if ($fg -ne $t.hwnd) {
+    $fg = [GmWin]::GetForegroundWindow()
+    if (-not $okFocus -and $fg -ne $t.hwnd) {
       Write-WLog ('abort: target not foreground fg=' + $fg + ' target=' + $t.hwnd)
       return $false
     }
@@ -376,6 +372,7 @@ $micBtn.Add_Click({
     if (-not [GmRec]::IsRecording) {
       $script:recWav = Join-Path $recDir ('rec-' + (Get-Date).ToString('yyyyMMdd-HHmmss') + '.wav')
       $r = [GmRec]::Start()
+      Write-WLog ('mic start: ' + $r + ' -> ' + $script:recWav)
       if ($r -like 'RECORDING*') {
         $micBtn.Content = 'Stop'
         $micBtn.Background = '#FF8A2B2B'
@@ -385,6 +382,7 @@ $micBtn.Add_Click({
       }
     } else {
       $r = [GmRec]::Stop($script:recWav)
+      Write-WLog ('mic stop: ' + $r + ' -> ' + $script:recWav)
       $micBtn.Content = 'Mic'
       $micBtn.Background = '#FF1F6F4A'
       if ($r -like 'SAVED*') {

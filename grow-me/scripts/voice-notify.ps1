@@ -12,7 +12,7 @@ param(
   [string]$Text,
   [string]$File,
   [string]$Voice = 'zh-CN-YunxiNeural',
-  [ValidateSet('a', 'b', 'c', 'youth')][string]$Preset,
+  [ValidateSet('a', 'b', 'c', 'youth', 'manboo')][string]$Preset = 'manboo',
   [string]$Rate = '+0%',
   [string]$Pitch = '+0Hz',
   [string]$Volume = '+0%',
@@ -29,6 +29,7 @@ $presetMap = @{
   b     = @{ voice = 'zh-CN-XiaoyiNeural';   rate = 0; pitch = 0; volume = 0 }
   c     = @{ voice = 'zh-CN-YunxiNeural';    rate = 0; pitch = 0; volume = 0 }
   youth = @{ voice = 'zh-CN-YunxiNeural';    rate = -2; pitch = 8; volume = 0 }
+  manboo = @{ voice = 'zh-CN-XiaoyiNeural';  rate = 2; pitch = 30; volume = 0 }
 }
 $effRate = $Rate
 $effPitch = $Pitch

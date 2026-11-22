@@ -27,6 +27,13 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
 
 点击后：把文字放进剪贴板 → 激活 `DeepSeek Harness` 窗口 → `Ctrl+V` → `Enter`，即**直接作为一条消息发进当前会话**（DSH 没有公开的消息 API，所以用窗口级自动化；需要 DSH 窗口存在）。
 
+## 为什么之前“识别出来但发不出去”（V1.10.14 修复）
+
+- 日志会出现 `abort: target not foreground fg=… target=…`：Windows 前台锁导致 `SetForegroundWindow` 被拒，脚本安全中止（避免把内容贴到别的窗口）。
+- 修复：`ForceForeground` = 轻敲 Alt 解锁前台锁 → `BringWindowToTop` + `SetForegroundWindow` → 若仍失败则 `AttachThreadInput` 强制附加线程抢焦点；最多重试 3 次，成功后才粘贴发送。
+- 实测：`mic start: RECORDING` → `mic stop: SAVED …` → `asr(sensevoice): …` → `target foreground ok` → `sent to […]`。
+- 录音失败/被占用时日志会写 `mic start: OPEN_FAIL…` / `mic stop: EMPTY…`，录音目录：`%USERPROFILE%\.grow-me\widget\rec`。
+
 ## 语音录入（V1.10.13：录音文件也发过去）
 
 1. 点 `Mic` → 开始录音（16 kHz / 16-bit / 单声道，最长 60 秒），按钮变 `Stop`；

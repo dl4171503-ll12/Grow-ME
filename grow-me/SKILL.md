@@ -10,12 +10,12 @@ description: >-
   接手后会先起本地监测台（默认端口 8176）、扫描本机已装 AI，并用定位仪上报心跳与证据。本 skill 装上后，即使没点名，动代码/跑命令前也应遵守本协议。
 license: MIT
 metadata:
-  version: V1.10.13
+  version: V1.10.14
   kind: policy
   maturity: stable
 ---
 
-# Grow Me — V1.10.13
+# Grow Me — V1.10.14
 
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 常驻模式：装上即对所有动手类任务生效，不必每次点名。
@@ -206,7 +206,7 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 
 1. 单独写一份**白话摘要**（1–2 句、≤60 字，不说术语、不列清单、不贴路径）到
    `.grow-me/voice/<yyyyMMdd-HHmm>-<slug>.txt`；
-2. `powershell -File scripts/voice-notify.ps1 -File <该文件>` —— 默认 **Edge 神经语音 C 云希**（`zh-CN-YunxiNeural`，中英混读正常）；预设 `-Preset a|b|c`（晓晓/晓伊/云希）；
+2. `powershell -File scripts/voice-notify.ps1 -File <该文件>` —— 默认 **manboo 音色**（亮而年轻，参考用户 ManBoo 样本）；预设 `-Preset a|b|c|youth|manboo`；
 3. 脚本自动判断前台：用户**不在本窗口**（前台不是 DeepSeek Harness/DSH）→ 加"提醒："但**默认只播 1 遍**（`-RepeatBackground N` 可要求多遍）；在本窗口同样 1 遍；
 4. Edge 不可用自动回退离线 Piper；播报失败只记一行，不影响任务完成判定。
 5. **表情不朗读**：默认按表情含义与数量调语速/音调（😊 开心、😢 难过…；`-NoEmotion` 关闭，`-SpeakEmoji` 照读），细节见

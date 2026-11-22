@@ -32,6 +32,14 @@
 
 ## 版本记录
 
+### V1.10.14（修复发不出去 + 换 ManBoo 风格声音 + 去喘气感）
+- 发送失败根因：Windows 前台锁导致 `SetForegroundWindow` 被拒，安全中止（日志 `abort: target not foreground`）。
+  修复：`GmWin.ForceForeground`（Alt 解锁 + BringWindowToTop + AttachThreadInput 兜底 + 3 次重试），成功后才粘贴发送。
+- 新增组件条录音日志（`mic start/mic stop`），录音目录 `%USERPROFILE%\.grow-me\widget\rec`。
+- 新增预设 `manboo`（XiaoyiNeural +30Hz、+2%），按用户提供的 `ManBoo的声音.mp3`（F0≈329Hz）匹配；`voice-notify` 默认改用 manboo。
+- 响度处理默认改为**峰值归一（不压缩）**，去掉压缩造成的喘气感/机械感；`-CompressLoud` 可恢复压缩。
+- 实测：`target foreground ok` → `sent to […] | audio: …`。
+
 ### V1.10.13（语音消息带音频文件，agent 可直接读 WAV）
 - 组件条语音发送格式改为 `[voice] <识别文字> | audio: <WAV 路径>`；识别为空时 `[voice] (asr empty) | audio: <路径>`。
 - 新增 `scripts/asr-file.ps1`：对任意音频文件跑 SenseVoice→Whisper→SAPI，输出 `ASR_TEXT …`，供 agent 直接“听”文件；

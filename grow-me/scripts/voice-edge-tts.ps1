@@ -8,7 +8,7 @@
 param(
   [string]$Text,
   [string]$Voice = 'zh-CN-YunxiNeural',
-  [ValidateSet('a', 'b', 'c', 'youth')][string]$Preset,
+  [ValidateSet('a', 'b', 'c', 'youth', 'manboo')][string]$Preset,
   [string]$Rate = '+0%',
   [string]$Pitch = '+0Hz',
   [string]$Volume = '+0%',
@@ -20,7 +20,8 @@ param(
   [switch]$ListVoices,
   [switch]$ListPresets,
   [switch]$NoEmotion,
-  [switch]$SpeakEmoji
+  [switch]$SpeakEmoji,
+  [switch]$CompressLoud
 )
 $ErrorActionPreference = 'Stop'
 $presets = [ordered]@{
@@ -28,6 +29,7 @@ $presets = [ordered]@{
   b     = @{ voice = 'zh-CN-XiaoyiNeural';   label = 'B Xiaoyi (female, lively)'; rate = 0; pitch = 0; volume = 0 }
   c     = @{ voice = 'zh-CN-YunxiNeural';    label = 'C Yunxi (male, sunny, default)'; rate = 0; pitch = 0; volume = 0 }
   youth = @{ voice = 'zh-CN-YunxiNeural';    label = 'Youth gentle male 16-18 (Yunxi +8Hz, -2% rate, loudness-max processed)'; rate = -2; pitch = 8; volume = 0 }
+  manboo = @{ voice = 'zh-CN-XiaoyiNeural';  label = 'ManBoo-like bright young female (Xiaoyi +30Hz, +2% rate)'; rate = 2; pitch = 30; volume = 0 }
 }
 if ($ListPresets) {
   foreach ($k in $presets.Keys) { "{0} -> {1} | {2}" -f $k, $presets[$k].voice, $presets[$k].label }
@@ -257,7 +259,9 @@ Write-Wav $outWav $arr $sampleRate
 if (-not $NoLoud) {
   $loudScript = Join-Path $PSScriptRoot 'voice-loudness.py'
   if (Test-Path $loudScript) {
-    $loudOut = & py -3 -X utf8 $loudScript $outWav $outWav 2>&1
+    $mode = 'peak'
+    if ($CompressLoud) { $mode = 'compress' }
+    $loudOut = & py -3 -X utf8 $loudScript $outWav $outWav $mode 2>&1
     if ($loudOut) { Write-Host ('LOUDNESS ' + ($loudOut -join ' ')) }
   }
 }

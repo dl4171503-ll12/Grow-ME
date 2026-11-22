@@ -3,6 +3,11 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.14 — 修复发不出去 + ManBoo 风格声音
+
+- 发送失败：前台锁导致 SetForegroundWindow 被拒；新增 ForceForeground（Alt 解锁 + AttachThreadInput + 重试），成功才发送；新增录音日志。
+- 声音：新增 manboo 预设（Xiaoyi +30Hz/+2%），voice-notify 默认使用；响度改峰值归一，去掉压缩喘气感。
+
 ## V1.10.13 — 语音消息带音频文件
 
 - 组件条语音发送改为 `[voice] 文字 | audio: <WAV>`；新增 asr-file.ps1 供 agent 直接读音频（SenseVoice→Whisper→SAPI）。

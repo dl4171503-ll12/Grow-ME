@@ -105,6 +105,38 @@ public static class GmWin {
   [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
   [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
   [DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr extra);
+  [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
+  [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr h);
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+  [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
+  [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+  public static bool ForceForeground(IntPtr h) {
+    try {
+      if (GetForegroundWindow() == h) return true;
+      // Alt tap unlocks the foreground lock
+      keybd_event(0x12, 0, 0, UIntPtr.Zero);
+      keybd_event(0x12, 0, 2, UIntPtr.Zero);
+      System.Threading.Thread.Sleep(80);
+      ShowWindow(h, 9);
+      BringWindowToTop(h);
+      SetForegroundWindow(h);
+      System.Threading.Thread.Sleep(150);
+      if (GetForegroundWindow() == h) return true;
+      // AttachThreadInput fallback
+      uint fgPid; uint fgThread = GetWindowThreadProcessId(GetForegroundWindow(), out fgPid);
+      uint myThread = GetCurrentThreadId();
+      if (fgThread != 0 && fgThread != myThread) {
+        AttachThreadInput(myThread, fgThread, true);
+        BringWindowToTop(h);
+        SetForegroundWindow(h);
+        AttachThreadInput(myThread, fgThread, false);
+        System.Threading.Thread.Sleep(150);
+      }
+      return GetForegroundWindow() == h;
+    } catch { return false; }
+  }
+
   [StructLayout(LayoutKind.Sequential)] public struct RECT { public int L, T, R, B; }
   public delegate bool EnumWindowsProc(IntPtr h, IntPtr l);
   [DllImport("user32.dll")] public static extern bool EnumWindows(EnumWindowsProc cb, IntPtr l);
