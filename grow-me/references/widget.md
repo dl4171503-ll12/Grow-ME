@@ -27,13 +27,15 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
 
 点击后：把文字放进剪贴板 → 激活 `DeepSeek Harness` 窗口 → `Ctrl+V` → `Enter`，即**直接作为一条消息发进当前会话**（DSH 没有公开的消息 API，所以用窗口级自动化；需要 DSH 窗口存在）。
 
-## 语音录入
+## 语音录入（V1.10.13：录音文件也发过去）
 
 1. 点 `Mic` → 开始录音（16 kHz / 16-bit / 单声道，最长 60 秒），按钮变 `Stop`；
-2. 再说一次 → 停止录音，保存到 `~/.grow-me/widget/rec/rec-<时间>.wav`；
-3. **本地识别**：SenseVoice（主）→ Whisper（备）→ Windows SAPI（兜底），全程离线；
-4. 识别结果直接发进会话；识别为空时发送 `[voice] 本地识别为空，音频文件: <路径>`，把音频路径也带上；
-5. 发送成功只更新状态文字，**不播“已发送”**（`ackVoice` 为空即静默）。
+2. 再说一次 → 停止录音，保存到 `~/.grow-me/widget/rec/rec-<时间>.wav`（自动增益）；
+3. 本地识别：SenseVoice → Whisper → SAPI；
+4. 识别结果 + **音频路径**一起发进会话：
+   `[voice] 识别出的文字 | audio: C:\Users\...\rec-20261122-1730.wav`
+5. agent 收到后可以用 `powershell -File scripts/asr-file.ps1 -Wav <路径>` **直接再读一遍音频**，然后用语音回复（规则十一），
+   不只是依赖文字。
 
 ## 响应体验
 

@@ -3,6 +3,11 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.13 — 语音消息带音频文件
+
+- 组件条语音发送改为 `[voice] 文字 | audio: <WAV>`；新增 asr-file.ps1 供 agent 直接读音频（SenseVoice→Whisper→SAPI）。
+- 包含 V1.10.12：播报内容哈希去重（30 分钟内不重播）。
+
 ## V1.10.12 — 播报去重（同一句话不再反复念）
 
 - voice-notify.ps1 增加内容哈希去重：同一句话 30 分钟内重复调用直接静默（spoken:false），-ForceAnnounce 可强制重播。

@@ -392,11 +392,12 @@ $micBtn.Add_Click({
         $win.Dispatcher.Invoke([action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
         $text = Run-Asr $script:recWav
         if ($text) {
-          $sent = Send-Harness $text
+          $msg = '[voice] ' + $text + ' | audio: ' + $script:recWav
+          $sent = Send-Harness $msg
           $status.Text = $(if ($sent) { 'sent: ' + $text } else { 'no window: ' + $text })
           if ($sent) { Speak-Ack $ackSent }
         } else {
-          $msg = $msgAudioOnly + ' ' + $script:recWav
+          $msg = '[voice] (asr empty) | audio: ' + $script:recWav
           $sent = Send-Harness $msg
           $status.Text = $(if ($sent) { 'sent (audio only)' } else { 'no window' })
           if ($sent) { Speak-Ack $ackAudio }
