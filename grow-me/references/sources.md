@@ -32,6 +32,11 @@
 
 ## 版本记录
 
+### V1.10.9（修 Whisper 文字乱码：UTF-8 管道）
+- 问题：Python 输出经 PowerShell 管道时按系统代码页解码，Whisper 识别结果变成 `鎴戞鍦ㄧ敤…` 这种乱码，发进聊天也是乱码。
+- 修复：widget.ps1 启动时设 `[Console]::OutputEncoding`/`OutputEncoding` 为 UTF-8、`PYTHONIOENCODING=utf-8`；asr-whisper.py 内 `sys.stdout.reconfigure(encoding='utf-8')`。
+- 实测：同一段录音输出「我现在正在用这个控制条尝试录音你能不能听到?」（22 字，1.55s）。
+
 ### V1.10.8（语音识别换成本地 Whisper，中文准确率大幅提升）
 - 默认 ASR 改为 **faster-whisper base**（离线 CPU int8，模型 138 MB 存于 `~/.grow-me/asr/faster-whisper-base`）；SAPI 降级为兜底。
 - 新增 `scripts/asr-whisper.py`（soundfile 读 WAV + 重采样 + zh transcribe + VAD）与 `scripts/asr-setup.ps1`（pip 安装 + hf-mirror 下模型）。

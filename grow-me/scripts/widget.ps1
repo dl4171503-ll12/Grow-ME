@@ -4,9 +4,18 @@
 # - buttons send fixed messages to the DeepSeek Harness window (clipboard paste + Enter)
 # - mic: click to record, click again to stop -> local SAPI ASR -> send
 # Run: powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
-param()
+param(
+  [string]$AsrTest
+)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Windows.Forms
+# make Python/console output UTF-8 so ASR text is not mojibake
+try {
+  [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+  $OutputEncoding = [Text.UTF8Encoding]::new($false)
+  $env:PYTHONIOENCODING = 'utf-8'
+  $env:PYTHONUTF8 = '1'
+} catch {}
 
 $root = Join-Path $env:USERPROFILE '.grow-me\widget'
 $recDir = Join-Path $root 'rec'
@@ -207,6 +216,11 @@ function Run-Asr([string]$wav) {
 }
 
 # ---------------- position / state ----------------
+if ($AsrTest) {
+  $text = Run-Asr $AsrTest
+  Write-Output ('ASR: ' + $text)
+  exit 0
+}
 $baseX = 80; $baseY = 80
 if (Test-Path $posFile) {
   try { $p = Get-Content -Raw $posFile | ConvertFrom-Json; $baseX = [int]$p.x; $baseY = [int]$p.y } catch {}

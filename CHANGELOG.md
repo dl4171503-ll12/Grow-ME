@@ -3,6 +3,12 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.9 — 修 Whisper 识别文字乱码（UTF-8 管道）
+
+- 问题：Python → PowerShell 管道按系统代码页解码，Whisper 结果变乱码并发进聊天。
+- 修复：widget 启动设置 UTF-8 控制台/OutputEncoding 与 PYTHONIOENCODING；asr-whisper.py stdout 强制 UTF-8。
+- 实测同一段录音输出「我现在正在用这个控制条尝试录音你能不能听到?」。
+
 ## V1.10.8 — 语音识别换成本地 Whisper
 
 - 默认 ASR 改为 faster-whisper base（离线 CPU int8，模型 ~138MB，存 `%USERPROFILE%\.grow-me\asr\faster-whisper-base`）；SAPI 仅作兜底。

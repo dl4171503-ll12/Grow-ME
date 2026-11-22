@@ -6,6 +6,12 @@ import numpy as np
 import soundfile as sf
 from faster_whisper import WhisperModel
 
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 wav_path = sys.argv[1]
 model_dir = sys.argv[2] if len(sys.argv) > 2 else r"C:\Users\David\.grow-me\asr\faster-whisper-base"
 
