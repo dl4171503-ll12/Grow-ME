@@ -97,8 +97,8 @@ powershell -File scripts/voice-notify.ps1 -File x.txt -Voice zh-CN-YunxiNeural -
   | `a` | `zh-CN-XiaoxiaoNeural` | 女声，温暖 |
   | `b` | `zh-CN-XiaoyiNeural` | 女声，活泼 |
   | `c` | `zh-CN-YunxiNeural` | 男声，阳光（**默认**） |
-  | `youth` | `zh-CN-YunxiNeural` + 升调 +8Hz、语速 -2%、音量 +30%、峰值归一化到 -1dB | 16–18 岁青年男声（旧默认） |
-  | `manboo` | `zh-CN-XiaoyiNeural` + 升调 +30Hz、语速 +2% | **新默认**：参考用户提供的 ManBoo 样本（F0≈329Hz 的明亮年轻女声），更有起伏、不冰冷 |
+  | `youth` | `zh-CN-YunxiNeural` + 升调 +8Hz、语速 -2%、音量 +30%、峰值归一化到 -1dB | 16–18 岁青年男声（**当前默认**） |
+  | `manboo` | `zh-CN-XiaoyiNeural` + 升调 +30Hz、语速 +2% | 明亮年轻女声（用户试听后觉得刺耳，**已停用为默认**，需要时可显式 `-Preset manboo`） |
   | `c` | `zh-CN-YunxiNeural` | 男声，阳光（备用） |
 
   查看映射：`voice-edge-tts.ps1 -ListPresets`；完整音色表：`-ListVoices`。

@@ -3,6 +3,10 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.15 — 音色回退
+
+- manboo（Xiaoyi +30Hz）试听刺耳，按用户要求回退：voice-notify 默认 Preset 改回 youth（Yunxi +8Hz）；manboo 仅保留为可选。
+
 ## V1.10.14 — 修复发不出去 + ManBoo 风格声音
 
 - 发送失败：前台锁导致 SetForegroundWindow 被拒；新增 ForceForeground（Alt 解锁 + AttachThreadInput + 重试），成功才发送；新增录音日志。

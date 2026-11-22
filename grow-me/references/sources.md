@@ -32,6 +32,10 @@
 
 ## 版本记录
 
+### V1.10.15（回退音色：user 觉得 manboo 太刺耳）
+- 用户试听 manboo（Xiaoyi +30Hz）后明确要求先换回旧版声音；`voice-notify.ps1` 默认 Preset 改回 `youth`（Yunxi +8Hz）。
+- `manboo` 预设保留但不再默认。
+
 ### V1.10.14（修复发不出去 + 换 ManBoo 风格声音 + 去喘气感）
 - 发送失败根因：Windows 前台锁导致 `SetForegroundWindow` 被拒，安全中止（日志 `abort: target not foreground`）。
   修复：`GmWin.ForceForeground`（Alt 解锁 + BringWindowToTop + AttachThreadInput 兜底 + 3 次重试），成功后才粘贴发送。

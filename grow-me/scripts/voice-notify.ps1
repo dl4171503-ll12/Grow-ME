@@ -12,7 +12,7 @@ param(
   [string]$Text,
   [string]$File,
   [string]$Voice = 'zh-CN-YunxiNeural',
-  [ValidateSet('a', 'b', 'c', 'youth', 'manboo')][string]$Preset = 'manboo',
+  [ValidateSet('a', 'b', 'c', 'youth', 'manboo')][string]$Preset = 'youth',
   [string]$Rate = '+0%',
   [string]$Pitch = '+0Hz',
   [string]$Volume = '+0%',
