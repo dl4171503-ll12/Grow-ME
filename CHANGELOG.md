@@ -3,6 +3,12 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.12 — 播报去重（同一句话不再反复念）
+
+- voice-notify.ps1 增加内容哈希去重：同一句话 30 分钟内重复调用直接静默（spoken:false），-ForceAnnounce 可强制重播。
+- 规则十一补硬性要求：每个任务新写白话摘要文件，禁止复用旧文件。
+- 实测：同一文件连续调用两次 → 第一次 spoken:true，第二次 duplicate suppressed。
+
 ## V1.10.11 — 播报只念一遍，去掉“已发送”确认音
 
 - voice-notify.ps1 默认 RepeatBackground=1：任务播报只播一遍（需要多遍显式 -RepeatBackground N）。

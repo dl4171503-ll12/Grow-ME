@@ -10,12 +10,12 @@ description: >-
   接手后会先起本地监测台（默认端口 8176）、扫描本机已装 AI，并用定位仪上报心跳与证据。本 skill 装上后，即使没点名，动代码/跑命令前也应遵守本协议。
 license: MIT
 metadata:
-  version: V1.10.11
+  version: V1.10.12
   kind: policy
   maturity: stable
 ---
 
-# Grow Me — V1.10.11
+# Grow Me — V1.10.12
 
 > **先问清 → 先落盘 → 再动手；上下文只留结论，细节去文件里取。**
 > 常驻模式：装上即对所有动手类任务生效，不必每次点名。
@@ -212,7 +212,7 @@ Q1 <标题> — 建议：<答案>（默认）；理由：<半句>
 5. **表情不朗读**：默认按表情含义与数量调语速/音调（😊 开心、😢 难过…；`-NoEmotion` 关闭，`-SpeakEmoji` 照读），细节见
    [references/voice-report.md](references/voice-report.md)。
 
-- 硬规则：白话摘要是**单独生成**的，不是把技术报告念一遍；说不清就说"结果在报告里"。
+- 硬规则：白话摘要是**单独生成**的，不是把技术报告念一遍；**每个任务新写一份，禁止复用旧文件**；同一句话 30 分钟内自动去重不重播（`-ForceAnnounce` 可强制）。
 - 调参：`-Voice zh-CN-YunxiNeural`（男声）、`-Rate +10%`、`-RepeatBackground 3`；模板与例子见
   [references/voice-report.md](references/voice-report.md)
 

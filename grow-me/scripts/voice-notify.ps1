@@ -19,7 +19,9 @@ param(
   [string]$ForegroundWindow = '',
   [int]$RepeatBackground = 1,
   [switch]$ForceForeground,
-  [switch]$NoPlay
+  [switch]$NoPlay,
+  [switch]$ForceAnnounce,
+  [int]$DedupMinutes = 30
 )
 $ErrorActionPreference = 'Stop'
 $presetMap = @{
@@ -62,6 +64,24 @@ if ($File) {
   $spokenText = (Get-Content -LiteralPath $sourceFile -Raw -Encoding UTF8).Trim()
 }
 if (-not $spokenText) { Write-Host 'usage: voice-notify.ps1 -Text "..." | -File path'; exit 0 }
+
+# dedupe: never read the same announcement again within N minutes (unless -ForceAnnounce)
+$stateFile = Join-Path $voiceDir 'last-announce.json'
+$hash = (Get-FileHash -Algorithm SHA256 -InputStream ([IO.MemoryStream]::new([Text.Encoding]::UTF8.GetBytes($spokenText)))).Hash
+if (-not $ForceAnnounce -and (Test-Path $stateFile)) {
+  try {
+    $prev = Get-Content -Raw $stateFile | ConvertFrom-Json
+    if ($prev.hash -eq $hash -and $prev.when) {
+      $age = ((Get-Date) - [datetime]$prev.when).TotalMinutes
+      if ($age -lt $DedupMinutes) {
+        $dup = [ordered]@{ ok = $true; spoken = $false; reason = 'duplicate suppressed'; age_min = [math]::Round($age, 1); text = $spokenText } | ConvertTo-Json -Compress
+        Add-Content -LiteralPath $notifyLog -Value $dup -Encoding UTF8
+        Write-Output $dup
+        exit 0
+      }
+    }
+  } catch {}
+}
 
 # foreground detection
 Add-Type @"
@@ -131,6 +151,7 @@ for ($i = 1; $i -le $repeat; $i++) {
 
 $record = [ordered]@{
   ok = $true
+  spoken = $true
   when = (Get-Date).ToString('o')
   foreground = $inForeground
   foreground_process = $fgName
@@ -144,4 +165,5 @@ $record = [ordered]@{
 }
 $line = ($record | ConvertTo-Json -Compress)
 Add-Content -LiteralPath $notifyLog -Value $line -Encoding UTF8
+try { @{ hash = $hash; when = (Get-Date).ToString('o'); text = $spokenText } | ConvertTo-Json -Compress | Set-Content -Path $stateFile -Encoding UTF8 } catch {}
 $line

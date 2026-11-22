@@ -11,6 +11,9 @@
 
 单独写成 `.grow-me/voice/<yyyyMMdd-HHmm>-<slug>.txt`，然后 `voice-notify.ps1 -File <该文件>`。
 
+- **每个任务必须新写一份**，禁止复用上一个任务的旧文件（否则会把旧句子反复念，用户会烦）；
+- 同一句话 **30 分钟内不会重复播**：`voice-notify.ps1` 用内容哈希去重，重复调用直接静默返回 `spoken:false`；确需重播用 `-ForceAnnounce`。
+
 | 要求 | 说明 |
 |---|---|
 | 1–2 句，≤60 字 | 长了没人听完 |
