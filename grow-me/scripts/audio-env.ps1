@@ -91,8 +91,11 @@ public static class AudioEnv {
     if (setVolume) {
       var ctx = Guid.Empty;
       vol.SetMasterVolumeLevelScalar((float)level, ref ctx);
-      if (unmute) vol.SetMute(false, ref ctx);
       vol.GetMasterVolumeLevelScalar(out scalar);
+    }
+    if (unmute) {
+      var ctx2 = Guid.Empty;
+      vol.SetMute(false, ref ctx2);
       vol.GetMute(out mute);
     }
     return "DEVICE=" + name + " | id=" + id + " | volume=" + Math.Round(scalar * 100) + "% | mute=" + mute;

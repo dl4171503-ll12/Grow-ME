@@ -14,6 +14,7 @@ param(
   [string]$Volume = '+0%',
   [double]$GainDb = 0,
   [switch]$Normalize,
+  [switch]$NoLoud,
   [string]$SaveMp3,
   [switch]$NoPlay,
   [switch]$ListVoices,
@@ -26,7 +27,7 @@ $presets = [ordered]@{
   a     = @{ voice = 'zh-CN-XiaoxiaoNeural'; label = 'A Xiaoxiao (female, warm)'; rate = 0; pitch = 0; volume = 0 }
   b     = @{ voice = 'zh-CN-XiaoyiNeural';   label = 'B Xiaoyi (female, lively)'; rate = 0; pitch = 0; volume = 0 }
   c     = @{ voice = 'zh-CN-YunxiNeural';    label = 'C Yunxi (male, sunny, default)'; rate = 0; pitch = 0; volume = 0 }
-  youth = @{ voice = 'zh-CN-YunxiNeural';    label = 'Youth gentle male 16-18 (Yunxi +8Hz, -2% rate, +30% vol, normalized)'; rate = -2; pitch = 8; volume = 30 }
+  youth = @{ voice = 'zh-CN-YunxiNeural';    label = 'Youth gentle male 16-18 (Yunxi +8Hz, -2% rate, loudness-max processed)'; rate = -2; pitch = 8; volume = 0 }
 }
 if ($ListPresets) {
   foreach ($k in $presets.Keys) { "{0} -> {1} | {2}" -f $k, $presets[$k].voice, $presets[$k].label }
@@ -250,6 +251,16 @@ if ($GainDb -ne 0) {
   for ($i = 0; $i -lt $arr.Length; $i++) { $arr[$i] = $arr[$i] * $g }
 }
 Write-Wav $outWav $arr $sampleRate
+
+# loudness maximization (compressor + saturation + peak normalise) so it is audible
+# even at low system volume (e.g. 22%)
+if (-not $NoLoud) {
+  $loudScript = Join-Path $PSScriptRoot 'voice-loudness.py'
+  if (Test-Path $loudScript) {
+    $loudOut = & py -3 -X utf8 $loudScript $outWav $outWav 2>&1
+    if ($loudOut) { Write-Host ('LOUDNESS ' + ($loudOut -join ' ')) }
+  }
+}
 
 $spoken = ($segments | ForEach-Object { $_.text.Trim() }) -join ''
 Write-Host ('VOICE edge:' + $Voice + ' rate=' + $Rate)

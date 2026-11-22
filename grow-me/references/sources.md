@@ -32,6 +32,11 @@
 
 ## 版本记录
 
+### V1.9.7（自身音量拉满：22% 系统音量下也清楚）
+- 新增 `scripts/voice-loudness.py`：语音响度最大化（向上压缩 0.92 次幂、tanh 软限幅、峰值归一到 0.98）；`voice-edge-tts.ps1` 合成后**自动**处理（`-NoLoud` 可关）。
+- `voice-notify.ps1` 播报前自动**取消静音**（不动系统音量）；`audio-env.ps1` 支持只 `-Unmute`。
+- 实测：RMS 0.10→0.24（约 +7.7dB）；系统音量 22% 下用户确认“可以听得很清楚”。
+
 ### V1.9.6（排查“听不见”：系统音量仅 22%）
 - 新增 `scripts/audio-env.ps1`：用 CoreAudio（IMMDeviceEnumerator/IAudioEndpointVolume）读取默认播放设备名、系统音量与静音状态，并可用 `-SetVolume -Level 0.85 -Unmute` 直接调整（无需外部依赖）。
 - 实测：默认设备 `扬声器 (Senary Audio)`、**volume=22%**、mute=False → 调到 **85%** 后 youth 语音可清晰听到。

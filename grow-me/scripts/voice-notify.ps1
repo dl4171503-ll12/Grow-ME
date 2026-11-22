@@ -106,6 +106,9 @@ if (-not $inForeground) {
 
 $edgeOk = $true
 $fallback = $false
+# make sure the output device is not muted (system volume is left untouched)
+$audioEnv = Join-Path $here 'audio-env.ps1'
+if (Test-Path $audioEnv) { & powershell -NoProfile -ExecutionPolicy Bypass -File $audioEnv -Unmute 2>&1 | Out-Null }
 for ($i = 1; $i -le $repeat; $i++) {
   $ok = $true
   if (Test-Path $edgeScript) {

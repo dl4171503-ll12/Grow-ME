@@ -78,6 +78,12 @@ powershell -File scripts/voice-notify.ps1 -File x.txt -Voice zh-CN-YunxiNeural -
 ... voice-edge-tts.ps1 -Text "Carol，您好😢。我是David的AI，六君。"
 ```
 
+## 响度（自身音量拉满）
+
+- 所有 Edge 合成音频在播放前自动做**响度最大化**：`scripts/voice-loudness.py`（向上压缩 + tanh 软限幅 + 峰值归一 0.98），`-NoLoud` 可关。
+- 实测 22% 系统音量下清晰可听；播报前脚本会自动**取消静音**（不改用户音量）。
+- 若仍觉得小：`audio-env.ps1 -SetVolume -Level 0.85 -Unmute` 可临时提高系统音量再听。
+
 ## 语音后端
 
 - 默认 **Edge 神经语音 C 云希**（`zh-CN-YunxiNeural`，男声、阳光，中英混读正常）——用户已选定为日常播报音色。

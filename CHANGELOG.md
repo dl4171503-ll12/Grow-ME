@@ -3,6 +3,12 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.9.7 — 自身音量拉满（22% 系统音量下也清楚）
+
+- 新增 `scripts/voice-loudness.py`：语音响度最大化（向上压缩 + tanh 软限幅 + 峰值归一 0.98）；Edge 合成后自动处理（`-NoLoud` 可关）。
+- `voice-notify.ps1` 播报前自动取消静音（不改用户音量）；`audio-env.ps1` 支持只 `-Unmute`。
+- 实测 RMS 0.10→0.24（约 +7.7dB），系统音量 22% 下用户确认清晰。
+
 ## V1.9.6 — 排查“听不见”：系统音量仅 22%
 
 - 新增 `scripts/audio-env.ps1`（CoreAudio）：读默认播放设备/系统音量/静音，可 `-SetVolume -Level 0.85 -Unmute` 直接调整。
