@@ -17,7 +17,7 @@ param(
   [string]$Pitch = '+0Hz',
   [string]$Volume = '+0%',
   [string]$ForegroundWindow = '',
-  [int]$RepeatBackground = 2,
+  [int]$RepeatBackground = 1,
   [switch]$ForceForeground,
   [switch]$NoPlay
 )

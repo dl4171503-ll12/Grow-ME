@@ -34,8 +34,8 @@
 
 `voice-notify.ps1` 会取当前前台窗口的进程名与标题，与本窗口匹配（默认 `DeepSeek Harness|DeepSeek|Harness|DSH|127.0.0.1:52352`）：
 
-- **在前台** → 说 1 遍。
-- **不在前台** → 前面加"提醒："并**重复 2 遍**（`-RepeatBackground` 可调），确保用户听到。
+- 播报**默认只播 1 遍**（无论前后台）；`-RepeatBackground N` 可显式要求多遍（默认 1）。
+- 不在前台时会在前面加"提醒："，但**不再重复**——说一遍用户就能听到。
 - 判断结果会打印成一行 JSON，并写入 `%USERPROFILE%\.grow-me\voice\notify.jsonl`，可复查。
 
 ## 命令

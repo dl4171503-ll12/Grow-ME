@@ -31,20 +31,20 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
 
 1. 点 `Mic` → 开始录音（16 kHz / 16-bit / 单声道，最长 60 秒），按钮变 `Stop`；
 2. 再说一次 → 停止录音，保存到 `~/.grow-me/widget/rec/rec-<时间>.wav`；
-3. **本地识别**：`widget-asr.ps1` 用 Windows SAPI 离线 zh-CN 识别器把 WAV 转文字（免费、不联网）；
+3. **本地识别**：SenseVoice（主）→ Whisper（备）→ Windows SAPI（兜底），全程离线；
 4. 识别结果直接发进会话；识别为空时发送 `[voice] 本地识别为空，音频文件: <路径>`，把音频路径也带上；
-5. 发送成功会用 youth 音色播报"已发送"（短促，不打断）。
+5. 发送成功只更新状态文字，**不播“已发送”**（`ackVoice` 为空即静默）。
 
 ## 响应体验
 
-- 识别在本地完成（SAPI，秒级），发送是剪贴板+回车，链路里没有云端 ASR 往返，延迟低；
+- 识别在本地完成（SenseVoice 约 2 秒 / 8~9 秒音频），发送是剪贴板+回车，链路里没有云端 ASR 往返，延迟低；
 - 语音播报用已调好的 Edge youth + 响度最大化（见 `voice-report.md`），22% 系统音量也能听清；
 - 我（agent）收到消息后按规则十一在收尾时用白话播报结果。
 
 ## 局限（诚实说明）
 
 - DSH 没有公开消息 API，发送依赖窗口自动化：DSH 必须开着且窗口存在；若窗口找不到，状态栏显示 `no window`。
-- 录音走默认麦克风（当前是 `麦克风阵列`）；环境嘈杂时 SAPI 识别率会下降，此时会发送音频路径供排查。
+- 录音走默认麦克风（当前是 `麦克风阵列`）；环境嘈杂时 SAPI 兜底识别率会下降，但 SenseVoice/Whisper 一般仍可用，失败会发送音频路径供排查。
 - 组件条不监听全局快捷键；需要的话可加。
 
 ## 常驻最前与多桌面（V1.10.3）
@@ -79,10 +79,10 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
 
 ## 语音识别故障排查（V1.10.7）
 
-- 录音**自动增益**：内置麦克风阵列电平很低（可能只有满幅 0.1%），录制结束会自动放大到约 90% 满幅（最多 40 倍），再交给 SAPI。
+- 录音**自动增益**：内置麦克风阵列电平很低（可能只有满幅 0.1%），录制结束会自动放大到约 90% 满幅（最多 40 倍）。
 - ASR 三连：先识别原始 WAV，失败再试峰值归一版、再试压缩版；日志会写 `asr(raw|peak|compressed): 文字` 或 `asr: empty`。
 - 麦克风状态：`audio-env.ps1 -Capture` 查看默认麦克风音量/静音，`-Capture -SetVolume -Level 1.0 -Unmute` 拉满。
-- 局限：Windows SAPI 离线识别是中小模型，长句/口音/嘈杂环境准确率一般；要更高准确率可换在线 ASR（需 API）或 Whisper（本地大模型，需额外安装）。
+- 局限：SenseVoice small 对很快/很轻的口音仍可能错几个字；SAPI 兜底只是保底，不要指望准确率。
 
 ## 语音识别（V1.10.10：SenseVoice 为主）
 

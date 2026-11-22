@@ -3,6 +3,11 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.11 — 播报只念一遍，去掉“已发送”确认音
+
+- voice-notify.ps1 默认 RepeatBackground=1：任务播报只播一遍（需要多遍显式 -RepeatBackground N）。
+- widget-commands.json ackVoice 置空：组件条发送后不再播“已发送”，只更新状态文字。
+
 ## V1.10.10 — 语音识别换成 SenseVoice（中文不再瞎猜）
 
 - Whisper base 会把「语音识别」听成「云硬盘/云时边」；SenseVoice 对同一句完全正确。

@@ -32,6 +32,10 @@
 
 ## 版本记录
 
+### V1.10.11（播报只念一遍、去掉“已发送”确认音）
+- 用户反馈任务播报常念两遍、还会多一句“已发送”。`voice-notify.ps1` 默认 `RepeatBackground=1`（默认只播一遍，需要多遍显式传参）。
+- `widget-commands.json` 的 `ackVoice` 改为空字符串，组件条发送后**不再播报“已发送”**，只更新状态文字；想恢复填 `youth` 即可。
+
 ### V1.10.10（语音识别换成 SenseVoice，中文不再瞎猜词）
 - 用户反馈 Whisper base 把「语音识别」听成「云硬盘/云时边」；实测 SenseVoice 对同一句完全正确。
 - 新增 `scripts/asr-sensevoice.py`（sherpa-onnx SenseVoice，int8 CPU，use_itn），模型 228 MB 存于 `~/.grow-me/asr/sensevoice`。

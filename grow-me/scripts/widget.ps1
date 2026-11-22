@@ -32,7 +32,7 @@ if ($cfg -and $cfg.buttons) { $commands = $cfg.buttons } else {
 }
 $micSeconds = 60
 if ($cfg -and $cfg.micSeconds) { $micSeconds = [int]$cfg.micSeconds }
-$ackVoice = 'youth'
+$ackVoice = ''
 if ($cfg -and $cfg.ackVoice) { $ackVoice = [string]$cfg.ackVoice }
 
 . (Join-Path $PSScriptRoot 'widget-native.ps1')
@@ -158,6 +158,7 @@ function Send-Harness([string]$text, [switch]$DryRun) {
 }
 
 function Speak-Ack([string]$text) {
+  if (-not $ackVoice) { return }   # quiet by default: no "sent" voice confirmation
   $edge = Join-Path $PSScriptRoot 'voice-edge-tts.ps1'
   if (-not (Test-Path $edge)) { return }
   Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $edge, '-Preset', $ackVoice, '-Text', $text) -WindowStyle Hidden | Out-Null
