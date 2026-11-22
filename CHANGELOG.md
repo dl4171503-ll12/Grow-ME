@@ -3,6 +3,12 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.4 — 组件条默认缩成小球，X 收起/展开
+
+- 默认启动即小球；点小球展开成条；X 收回小球（不再退出）；右键菜单"退出"关闭；位置与折叠状态持久化。
+- 小球与条都可拖拽；限制在工作区不挡任务栏；看门狗 + IVirtualDesktopManager 让它在所有桌面可见。
+- 实测：折叠 44×40 / 展开 504×34；state 切换正确。
+
 ## V1.10.3 — 组件条始终最前 + 跟随虚拟桌面
 
 - 1.2 秒看门狗：`SetWindowPos(HWND_TOPMOST, NOMOVE|NOSIZE|NOACTIVATE)`，被其他置顶窗口压住自动抬回，不抢焦点。

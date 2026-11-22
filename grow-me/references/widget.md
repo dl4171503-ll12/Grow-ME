@@ -9,8 +9,9 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
 ```
 
 - 无依赖、纯 WPF（PowerShell 自带）；窗口 `Topmost=True`，可在任何应用最前端浮动。
-- 按住条身任意空白处拖拽；位置自动记住（`~/.grow-me/widget/pos.json`），并**限制在屏幕工作区内**（不会盖住任务栏）。
-- 关闭按钮 `X` 退出；`Mic` 是录音开关。
+- **默认缩成小球**（30px，绿色 "G"）；点小球展开成完整条；条上的 `X` 收回小球；右键小球/条 → 菜单"退出"才是关闭。
+- 小球和条都能按住拖拽到屏幕任意位置；位置与折叠状态自动记住（`~/.grow-me/widget/pos.json`、`state.json`），并限制在屏幕工作区内（不会盖住任务栏）。
+- **跟随虚拟桌面**：看门狗每 1.2 秒置顶一次，并用 `IVirtualDesktopManager` 把窗口移到当前桌面 —— 效果等价于"在所有桌面显示此窗口"（切到哪个桌面都能看到它）。
 
 ## 按钮（接口控制）
 

@@ -32,6 +32,11 @@
 
 ## 版本记录
 
+### V1.10.4（组件条默认缩成小球，X 收起/展开，桌面上跟随）
+- X 改为**收起成球**（不再退出）；默认启动即小球；点小球展开成条；位置与折叠状态存 `~/.grow-me/widget/{pos,state}.json`；右键菜单"退出"关闭。
+- 小球与条都可拖拽；窗口限制在工作区不挡任务栏；看门狗 + `IVirtualDesktopManager` 让它在所有桌面可见（切桌面自动跟随）。
+- 实测：折叠 44×40、展开 504×34；点球展开 state=false，点 X 收起 state=true。
+
 ### V1.10.3（组件条始终最前 + 跟随虚拟桌面）
 - 新增 1.2 秒看门狗：每次 `SetWindowPos(HWND_TOPMOST, NOMOVE|NOSIZE|NOACTIVATE)`，被其他置顶窗口压住后自动抬回，且不抢焦点。
 - 新增虚拟桌面跟随：`IVirtualDesktopManager`（IsWindowOnCurrentVirtualDesktop / GetWindowDesktopId / MoveWindowToDesktop），切桌面后组件条自动移到当前桌面。
