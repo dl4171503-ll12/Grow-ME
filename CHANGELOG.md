@@ -3,6 +3,12 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.2 — 修复组件条点按钮卡死消失
+
+- 根因：按钮处理器未捕获异常（剪贴板占用时 Clipboard.SetText 抛 ExternalException + EAP Stop）导致 WPF 宿主退出。
+- 修复：按钮/麦克风处理器 try/catch + 日志；剪贴板重试 3 次；按钮文案走 Tag；Send-Harness 全程捕获并记录 focus/clipboard。
+- 实测：UIAutomation 点击「说中文！」→ 日志 `sent: 说中文！`，组件条存活；日志在 `~/.grow-me/widget/widget.log`。
+
 ## V1.10.1 — 组件条按钮按用户清单更新
 
 - 按钮改为：`说中文！` / `有 bug 重新改` / `继续工作` / `停一下:` / `说大白话！`。

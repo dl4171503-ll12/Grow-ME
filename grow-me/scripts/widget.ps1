@@ -30,6 +30,11 @@ function Ch([int[]]$codes) { return (-join ($codes | ForEach-Object { [char]$_ }
 $ackSent = Ch 0x5DF2, 0x53D1, 0x9001                                   # 已发送
 $ackAudio = Ch 0x6CA1, 0x542C, 0x6E05, 0xFF0C, 0x5DF2, 0x628A, 0x97F3, 0x9891, 0x53D1, 0x8FC7, 0x53BB  # 没听清，已把音频发过去
 $msgAudioOnly = '[voice] ' + (Ch 0x672C, 0x5730, 0x8BC6, 0x522B, 0x4E3A, 0x7A7A, 0xFF0C, 0x97F3, 0x9891, 0x6587, 0x4EF6, 0xFF1A)
+$logFile = Join-Path $root 'widget.log'
+function Write-WLog([string]$m) {
+  try { Add-Content -Path $logFile -Value ((Get-Date).ToString('HH:mm:ss') + ' ' + $m) -Encoding UTF8 } catch {}
+}
+Write-WLog 'widget start'
 
 function Get-HarnessHandle {
   $procs = Get-Process -Name 'DeepSeek Harness' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 }
@@ -39,18 +44,31 @@ function Get-HarnessHandle {
 
 function Send-Harness([string]$text, [switch]$DryRun) {
   $h = Get-HarnessHandle
-  if ($h -eq [IntPtr]::Zero) { return $false }
-  if ($DryRun) { return $true }
-  [void][GmWin]::ShowWindow($h, 9)
-  [void][GmWin]::SetForegroundWindow($h)
-  Start-Sleep -Milliseconds 250
-  [System.Windows.Forms.Clipboard]::SetText($text)
-  Start-Sleep -Milliseconds 120
-  [System.Windows.Forms.SendKeys]::SendWait('^v')
-  Start-Sleep -Milliseconds 180
-  [System.Windows.Forms.SendKeys]::SendWait('{ENTER}')
-  Start-Sleep -Milliseconds 200
-  return $true
+  if ($h -eq [IntPtr]::Zero) { Write-WLog 'send: no harness window'; return $false }
+  if ($DryRun) { Write-WLog ('send dryrun: ' + $text); return $true }
+  try {
+    [void][GmWin]::ShowWindow($h, 9)
+    [void][GmWin]::SetForegroundWindow($h)
+    Start-Sleep -Milliseconds 300
+    $fg = [GmWin]::GetForegroundWindow()
+    if ($fg -ne $h) { Write-WLog ('focus mismatch fg=' + $fg + ' target=' + $h) }
+    $okClip = $false
+    for ($i = 0; $i -lt 3 -and -not $okClip; $i++) {
+      try { [System.Windows.Forms.Clipboard]::SetText($text); $okClip = $true }
+      catch { Start-Sleep -Milliseconds 150 }
+    }
+    if (-not $okClip) { Write-WLog 'send: clipboard fail'; return $false }
+    Start-Sleep -Milliseconds 150
+    [System.Windows.Forms.SendKeys]::SendWait('^v')
+    Start-Sleep -Milliseconds 220
+    [System.Windows.Forms.SendKeys]::SendWait('{ENTER}')
+    Start-Sleep -Milliseconds 250
+    Write-WLog ('sent: ' + $text)
+    return $true
+  } catch {
+    Write-WLog ('send error: ' + $_.Exception.Message)
+    return $false
+  }
 }
 
 function Speak-Ack([string]$text) {
@@ -125,18 +143,26 @@ $win.Add_MouseLeftButtonUp({
 foreach ($c in $commands) {
   $btn = New-Object System.Windows.Controls.Button
   $btn.Content = [string]$c.label
-  $txt = [string]$c.text
+  $btn.Tag = [string]$c.text
   $btn.Add_Click({
-      $ok = Send-Harness $txt
-      $status.Text = $(if ($ok) { 'sent' } else { 'no window' })
-      if ($ok) { Speak-Ack $ackSent }
-    }.GetNewClosure())
+      param($sender, $e)
+      try {
+        $cmd = [string]$sender.Tag
+        $ok = Send-Harness $cmd
+        $status.Text = $(if ($ok) { 'sent' } else { 'no window' })
+        if ($ok) { Speak-Ack $ackSent }
+      } catch {
+        Write-WLog ('cmd handler error: ' + $_.Exception.Message)
+        try { $status.Text = 'error' } catch {}
+      }
+    })
   [void]$cmdPanel.Children.Add($btn)
 }
 
 $script:recWav = $null
 $script:recStart = $null
 $micBtn.Add_Click({
+    try {
     if (-not [GmRec]::IsRecording) {
       $script:recWav = Join-Path $recDir ('rec-' + (Get-Date).ToString('yyyyMMdd-HHmmss') + '.wav')
       $r = [GmRec]::Start()
@@ -169,6 +195,10 @@ $micBtn.Add_Click({
       } else {
         $status.Text = $r
       }
+    }
+    } catch {
+      Write-WLog ('mic handler error: ' + $_.Exception.Message)
+      try { $status.Text = 'mic error'; $micBtn.Content = 'Mic' } catch {}
     }
   })
 

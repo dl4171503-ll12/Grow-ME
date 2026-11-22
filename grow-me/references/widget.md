@@ -46,6 +46,14 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
 - 录音走默认麦克风（当前是 `麦克风阵列`）；环境嘈杂时 SAPI 识别率会下降，此时会发送音频路径供排查。
 - 组件条不监听全局快捷键；需要的话可加。
 
+## 故障排查
+
+- 点按钮没反应 / 组件条消失过：先看日志 `~/.grow-me/widget/widget.log`（V1.10.2 起所有按钮/录音异常都写日志，不再崩掉整个组件条）。
+- 日志出现 `send: clipboard fail`：剪贴板被别的程序占用；脚本已自动重试 3 次，仍失败就稍后再点。
+- 日志出现 `focus mismatch`：DSH 窗口没抢到前台（可能被系统焦点保护拦住），再点一次通常即可。
+- `no harness window`：DSH 没开或窗口最小化到托盘；打开主窗口再点。
+- 日志出现 `sent: ...` 但聊天里没有：检查是否发到了别的输入框；点一下 DSH 输入框再重试。
+
 ## 相关文件
 
 | 文件 | 作用 |

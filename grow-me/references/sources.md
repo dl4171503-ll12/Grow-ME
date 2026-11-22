@@ -32,6 +32,11 @@
 
 ## 版本记录
 
+### V1.10.2（修复组件条点按钮卡死消失）
+- 根因：按钮点击处理器里未捕获异常（剪贴板被占用时 `Clipboard.SetText` 抛 `ExternalException`，加上 `$ErrorActionPreference='Stop'` 传播）导致 WPF 宿主进程直接退出。
+- 修复：按钮/麦克风处理器全部 try/catch + `Write-WLog` 日志；剪贴板写入重试 3 次；按钮文案改用 `Button.Tag` 传递（去掉 GetNewClosure 作用域隐患）；Send-Harness 全程异常捕获并记录 focus/clipboard 状态。
+- 实测：UIAutomation 点击「说中文！」→ 日志 `sent: 说中文！`，组件条存活未崩溃；日志 `~/.grow-me/widget/widget.log`。
+
 ### V1.10.1（组件条按钮按用户清单更新）
 - 按钮改为用户指定的 5 个：`说中文！` / `有 bug 重新改` / `继续工作` / `停一下:` / `说大白话！`（`widget-commands.json`）。
 - 实测重启后组件条显示 5 个按钮 + Mic + X；点击会作为消息发进 DSH 会话（剪贴板+回车）。
