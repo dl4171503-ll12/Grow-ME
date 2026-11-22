@@ -71,6 +71,19 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
 - 清理遗留实例：`powershell -File tools/widget-kill.ps1`（kit 工具）；查看数量：`tools/widget-count.ps1`。
 - 已处理“旧进程被强杀后互斥锁变成 Abandoned”的情况（捕获 `AbandonedMutexException` 视为拿到锁）。
 
+## 为什么之前按钮没用（V1.10.7 修复）
+
+- 现象：日志写 `sent`，但聊天里什么都没收到。
+- 根因：DSH 窗口当时在**另一个虚拟桌面**（DWM `cloaked=2`），`SetForegroundWindow` 失败，点击/粘贴落到了前台别的程序（例如 Edge）里。
+- 修复：发送前先 `IVirtualDesktopManager.FollowCurrent` 把目标 DSH 窗口拉到当前桌面 → 再激活 → **校验前台句柄确实是目标窗口**；不是就中止并写日志 `abort: target not foreground`，绝不往别的窗口乱贴。
+
+## 语音识别故障排查（V1.10.7）
+
+- 录音**自动增益**：内置麦克风阵列电平很低（可能只有满幅 0.1%），录制结束会自动放大到约 90% 满幅（最多 40 倍），再交给 SAPI。
+- ASR 三连：先识别原始 WAV，失败再试峰值归一版、再试压缩版；日志会写 `asr(raw|peak|compressed): 文字` 或 `asr: empty`。
+- 麦克风状态：`audio-env.ps1 -Capture` 查看默认麦克风音量/静音，`-Capture -SetVolume -Level 1.0 -Unmute` 拉满。
+- 局限：Windows SAPI 离线识别是中小模型，长句/口音/嘈杂环境准确率一般；要更高准确率可换在线 ASR（需 API）或 Whisper（本地大模型，需额外安装）。
+
 ## 故障排查
 
 - 点按钮没反应 / 组件条消失过：先看日志 `~/.grow-me/widget/widget.log`（V1.10.2 起所有按钮/录音异常都写日志，不再崩掉整个组件条）。

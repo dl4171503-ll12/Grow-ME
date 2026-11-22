@@ -3,6 +3,13 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.7 — 组件条按钮/语音“没用”修复（跨桌面 + 录音增益 + ASR 三连）
+
+- 根因：DSH 窗口在另一虚拟桌面（DWM cloaked），激活失败导致点击/粘贴落到 Edge；修复为先把 DSH 拉到当前桌面并校验前台句柄，否则中止。
+- 录音自动增益（内置麦克风电平极低 → 放大到 ~90% 满幅）；ASR 依次尝试 raw/peak/压缩版并写日志。
+- `audio-env.ps1 -Capture` 可查/设麦克风音量与静音。
+- 实测：`target foreground ok` → `sent to [...]`；录音 gain=22.1、峰值 90%。
+
 ## V1.10.6 — 组件条单实例（永远只保留最新）
 
 - 启动先结束所有旧实例（命令行精确匹配 `-File ...widget.ps1`，不误杀其他 PowerShell），再抢 `Local\GrowMeWidgetSingleton`（处理 AbandonedMutexException）。

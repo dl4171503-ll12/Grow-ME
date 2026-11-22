@@ -98,11 +98,25 @@ function Send-Harness([string]$text, [switch]$DryRun) {
   if (-not $t) { Write-WLog 'send: no harness window'; return $false }
   if ($DryRun) { Write-WLog ('send dryrun to [' + $t.title + ']'); return $true }
   try {
+    # the DSH window may live on another virtual desktop (DWM cloaked) -> bring it here first
+    [void][GmVd]::FollowCurrent($t.hwnd)
+    Start-Sleep -Milliseconds 150
     [void][GmWin]::ShowWindow($t.hwnd, 9)
     [void][GmWin]::SetForegroundWindow($t.hwnd)
-    Start-Sleep -Milliseconds 350
+    Start-Sleep -Milliseconds 400
     $fg = [GmWin]::GetForegroundWindow()
-    if ($fg -ne $t.hwnd) { Write-WLog ('focus mismatch fg=' + $fg + ' target=' + $t.hwnd) }
+    if ($fg -ne $t.hwnd) {
+      [void][GmVd]::FollowCurrent($t.hwnd)
+      Start-Sleep -Milliseconds 250
+      [void][GmWin]::SetForegroundWindow($t.hwnd)
+      Start-Sleep -Milliseconds 400
+      $fg = [GmWin]::GetForegroundWindow()
+    }
+    if ($fg -ne $t.hwnd) {
+      Write-WLog ('abort: target not foreground fg=' + $fg + ' target=' + $t.hwnd)
+      return $false
+    }
+    Write-WLog ('target foreground ok: ' + $t.title)
     # click into this conversation's input box (bottom-centre) so it does not go elsewhere
     $r = [GmWin+RECT]::new()
     if ([GmWin]::GetWindowRect($t.hwnd, [ref]$r)) {
@@ -143,9 +157,35 @@ function Speak-Ack([string]$text) {
 function Run-Asr([string]$wav) {
   $asr = Join-Path $PSScriptRoot 'widget-asr.ps1'
   if (-not (Test-Path $asr)) { return '' }
-  $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $asr -Wav $wav 2>&1
-  $line = ($out | Where-Object { $_ -like 'ASR_TEXT *' } | Select-Object -First 1)
-  if ($line) { return ($line -replace '^ASR_TEXT ', '').Trim() }
+  function Try-Asr([string]$target, [string]$tag) {
+    $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $asr -Wav $target 2>&1
+    $line = ($out | Where-Object { $_ -like 'ASR_TEXT *' } | Select-Object -First 1)
+    if ($line) {
+      $text = ($line -replace '^ASR_TEXT ', '').Trim()
+      Write-WLog ('asr(' + $tag + '): ' + $text)
+      return $text
+    }
+    return ''
+  }
+  $text = Try-Asr $wav 'raw'
+  if ($text) { return $text }
+  # quiet mic recordings are the main cause of empty SAPI results: try peak-normalised, then compressed
+  $loud = Join-Path $PSScriptRoot 'voice-loudness.py'
+  if (Test-Path $loud) {
+    $peakWav = $wav -replace '\.wav$', '-peak.wav'
+    try { & py -3 -X utf8 $loud $wav $peakWav peak 2>&1 | Out-Null } catch {}
+    if ((Test-Path $peakWav) -and ((Get-Item $peakWav).Length -gt 1000)) {
+      $text = Try-Asr $peakWav 'peak'
+      if ($text) { return $text }
+    }
+    $procWav = $wav -replace '\.wav$', '-proc.wav'
+    try { & py -3 -X utf8 $loud $wav $procWav 2>&1 | Out-Null } catch {}
+    if ((Test-Path $procWav) -and ((Get-Item $procWav).Length -gt 1000)) {
+      $text = Try-Asr $procWav 'compressed'
+      if ($text) { return $text }
+    }
+  }
+  Write-WLog 'asr: empty (raw/peak/compressed all failed)'
   return ''
 }
 

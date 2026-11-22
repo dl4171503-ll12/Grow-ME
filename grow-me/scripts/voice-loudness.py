@@ -6,6 +6,7 @@ import soundfile as sf
 
 src = sys.argv[1]
 dst = sys.argv[2] if len(sys.argv) > 2 else src
+mode = sys.argv[3] if len(sys.argv) > 3 else "compress"
 
 data, rate = sf.read(src, dtype="float32")
 if getattr(data, "ndim", 1) > 1:
@@ -16,6 +17,15 @@ if x.size == 0:
 
 x = x - np.mean(x)
 eps = 1e-9
+
+if mode == "peak":
+    peak = float(np.max(np.abs(x))) + eps
+    y = x * (0.92 / peak) if peak > 0 else x
+    sf.write(dst, y.astype(np.float32), rate, subtype="PCM_16")
+    rms_before = float(np.sqrt(np.mean(x * x)))
+    rms_after = float(np.sqrt(np.mean(y * y)))
+    print("PEAK rms_before=%.5f rms_after=%.5f" % (rms_before, rms_after))
+    sys.exit(0)
 
 # RMS envelope (15 ms window)
 win = max(1, int(0.015 * rate))

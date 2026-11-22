@@ -32,6 +32,13 @@
 
 ## 版本记录
 
+### V1.10.7（组件条为什么“没用”：跨桌面目标修复 + 录音自动增益 + ASR 三连）
+- 根因：DSH 窗口在另一虚拟桌面（DWM cloaked=2），SetForegroundWindow 失败，点击/粘贴落到 Edge；日志却写 sent。
+- 修复：发送前 `IVirtualDesktopManager.FollowCurrent` 把 DSH 拉到当前桌面 → 激活 → 校验前台句柄=目标，否则中止并记 `abort: target not foreground`。
+- 录音自动增益：内置麦克风阵列电平极低（满幅 0.1%），录制后自动放大到 ~90% 满幅（≤40 倍）。
+- ASR 三连：raw → peak 归一 → 压缩版轮流识别，日志 `asr(...)`；`audio-env.ps1 -Capture` 可查/设麦克风。
+- 实测：`target foreground ok` → `sent to [创建 grow me 技能 V1.0.0 — DeepSeek Harness]`；录音 gain=22.1、峰值 90%。
+
 ### V1.10.6（组件条单实例：永远只保留最新）
 - 启动时按命令行 `-File ...widget.ps1` 精确匹配并结束所有旧实例，再抢命名互斥锁 `Local\GrowMeWidgetSingleton`（处理 AbandonedMutexException）；`instance.json` 记录 pid + buildHash。
 - buildHash = `widget.ps1 + widget-native.ps1 + widget-commands.json` 的 SHA256；内容变化后再启动会立刻替换旧版。

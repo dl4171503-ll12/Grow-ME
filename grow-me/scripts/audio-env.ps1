@@ -2,7 +2,8 @@
 param(
   [switch]$SetVolume,
   [double]$Level = 0.85,
-  [switch]$Unmute
+  [switch]$Unmute,
+  [switch]$Capture
 )
 $ErrorActionPreference = 'Stop'
 Add-Type -TypeDefinition @"
@@ -70,11 +71,11 @@ public interface IAudioEndpointVolume {
 }
 
 public static class AudioEnv {
-  public static string Report(bool setVolume, double level, bool unmute) {
+  public static string Report(bool setVolume, double level, bool unmute, int flow) {
     var enumerator = (IMMDeviceEnumerator)new MMDeviceEnumeratorComObject();
     IMMDevice dev;
-    int hr = enumerator.GetDefaultAudioEndpoint(0, 0, out dev);
-    if (hr != 0) return "ERR no-default-render hr=" + hr;
+    int hr = enumerator.GetDefaultAudioEndpoint(flow, 0, out dev);
+    if (hr != 0) return "ERR no-default hr=" + hr;
     string id = ""; dev.GetId(out id);
     IPropertyStore store;
     dev.OpenPropertyStore(0, out store);
@@ -102,5 +103,7 @@ public static class AudioEnv {
   }
 }
 "@
-$out = [AudioEnv]::Report($SetVolume, $Level, $Unmute)
+$flow = 0
+if ($Capture) { $flow = 1 }
+$out = [AudioEnv]::Report($SetVolume, $Level, $Unmute, $flow)
 Write-Output $out

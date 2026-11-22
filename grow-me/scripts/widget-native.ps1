@@ -64,6 +64,21 @@ public static class GmRec {
     bufHandle.Free();
     IsRecording = false;
     if (n == 0) return "EMPTY";
+    // auto-gain: built-in mic array can be very quiet; boost before saving so local ASR works
+    short peak = 0;
+    for (uint i = 0; i + 1 < n; i += 2) {
+      short v = BitConverter.ToInt16(buf, (int)i);
+      int a = Math.Abs((int)v); if (a > peak) peak = (short)Math.Min(a, 32767);
+    }
+    double gain = (peak > 0) ? Math.Min(40.0, (0.90 * 32767.0) / peak) : 1.0;
+    if (gain < 1.0) gain = 1.0;
+    byte[] outBuf = new byte[n];
+    for (uint i = 0; i + 1 < n; i += 2) {
+      short v = BitConverter.ToInt16(buf, (int)i);
+      int sv = (int)Math.Round(v * gain);
+      if (sv > 32767) sv = 32767; if (sv < -32768) sv = -32768;
+      outBuf[i] = (byte)(sv & 0xFF); outBuf[i + 1] = (byte)((sv >> 8) & 0xFF);
+    }
     using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write)) {
       var w = new BinaryWriter(fs);
       w.Write(new byte[] { (byte)'R', (byte)'I', (byte)'F', (byte)'F' });
@@ -74,10 +89,10 @@ public static class GmRec {
       w.Write(rate); w.Write(rate * 2); w.Write((short)2); w.Write((short)16);
       w.Write(new byte[] { (byte)'d', (byte)'a', (byte)'t', (byte)'a' });
       w.Write((int)n);
-      w.Write(buf, 0, (int)n);
+      w.Write(outBuf, 0, (int)n);
       w.Flush();
     }
-    return "SAVED " + n;
+    return "SAVED " + n + " gain=" + Math.Round(gain, 1);
   }
 }
 
