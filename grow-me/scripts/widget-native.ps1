@@ -84,6 +84,45 @@ public static class GmWin {
   [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
   [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
   [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
+  [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h, int index);
+}
+
+[ComImport, Guid("AA509086-5CA9-4C25-8F95-589D3C07B48A")]
+public class VirtualDesktopManager { }
+
+[ComImport, Guid("A5CD92FF-29BE-454C-8D04-D82879FB3F1B"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IVirtualDesktopManager {
+  int IsWindowOnCurrentVirtualDesktop(IntPtr topLevelWindow, out int onCurrentDesktop);
+  int GetWindowDesktopId(IntPtr topLevelWindow, out Guid desktopId);
+  int MoveWindowToDesktop(IntPtr topLevelWindow, ref Guid desktopId);
+}
+
+public static class GmVd {
+  static IVirtualDesktopManager manager;
+  static IVirtualDesktopManager Manager() {
+    if (manager == null) manager = (IVirtualDesktopManager)new VirtualDesktopManager();
+    return manager;
+  }
+  public static string Status(IntPtr hwnd) {
+    try { int on; Manager().IsWindowOnCurrentVirtualDesktop(hwnd, out on); return on != 0 ? "current" : "other"; }
+    catch { return "unknown"; }
+  }
+  public static bool FollowCurrent(IntPtr hwnd) {
+    try {
+      var m = Manager();
+      int on; m.IsWindowOnCurrentVirtualDesktop(hwnd, out on);
+      if (on != 0) return false;
+      IntPtr fg = GmWin.GetForegroundWindow();
+      if (fg == IntPtr.Zero) return false;
+      Guid g;
+      if (m.GetWindowDesktopId(fg, out g) != 0) return false;
+      return m.MoveWindowToDesktop(hwnd, ref g) == 0;
+    } catch { return false; }
+  }
+  public static bool IsTopmost(IntPtr hwnd) {
+    try { return (GmWin.GetWindowLong(hwnd, -20) & 0x8) != 0; } catch { return false; }
+  }
 }
 "@
 }

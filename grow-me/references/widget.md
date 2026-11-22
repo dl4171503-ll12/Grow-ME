@@ -46,6 +46,12 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File scripts/widget.ps1
 - 录音走默认麦克风（当前是 `麦克风阵列`）；环境嘈杂时 SAPI 识别率会下降，此时会发送音频路径供排查。
 - 组件条不监听全局快捷键；需要的话可加。
 
+## 常驻最前与多桌面（V1.10.3）
+
+- **看门狗**：每 1.2 秒把窗口重新置顶（`SetWindowPos(HWND_TOPMOST, SWP_NOMOVE|NOSIZE|NOACTIVATE)`），所以即使别的程序也是置顶窗口，组件条也会被抬回最前，且不抢焦点。
+- **跟随虚拟桌面**：用 `IVirtualDesktopManager` 检测；当组件条不在当前桌面时，取前台窗口所在桌面 GUID，把组件条 `MoveWindowToDesktop` 过去 —— 切桌面（Win+Ctrl+←/→）后组件条会跟到当前桌面。
+- **局限**：独占全屏游戏 / 安全桌面（UAC）覆盖不了；若需要盖住"以管理员身份运行"的窗口，请以管理员身份启动组件条。
+
 ## 故障排查
 
 - 点按钮没反应 / 组件条消失过：先看日志 `~/.grow-me/widget/widget.log`（V1.10.2 起所有按钮/录音异常都写日志，不再崩掉整个组件条）。

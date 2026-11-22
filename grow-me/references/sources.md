@@ -32,6 +32,11 @@
 
 ## 版本记录
 
+### V1.10.3（组件条始终最前 + 跟随虚拟桌面）
+- 新增 1.2 秒看门狗：每次 `SetWindowPos(HWND_TOPMOST, NOMOVE|NOSIZE|NOACTIVATE)`，被其他置顶窗口压住后自动抬回，且不抢焦点。
+- 新增虚拟桌面跟随：`IVirtualDesktopManager`（IsWindowOnCurrentVirtualDesktop / GetWindowDesktopId / MoveWindowToDesktop），切桌面后组件条自动移到当前桌面。
+- 日志：`watchdog: topmost=True vd=current`；局限：独占全屏游戏、UAC 安全桌面、管理员权限窗口需以管理员启动。
+
 ### V1.10.2（修复组件条点按钮卡死消失）
 - 根因：按钮点击处理器里未捕获异常（剪贴板被占用时 `Clipboard.SetText` 抛 `ExternalException`，加上 `$ErrorActionPreference='Stop'` 传播）导致 WPF 宿主进程直接退出。
 - 修复：按钮/麦克风处理器全部 try/catch + `Write-WLog` 日志；剪贴板写入重试 3 次；按钮文案改用 `Button.Tag` 传递（去掉 GetNewClosure 作用域隐患）；Send-Harness 全程异常捕获并记录 focus/clipboard 状态。

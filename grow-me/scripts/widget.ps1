@@ -132,6 +132,24 @@ $micBtn = $win.FindName('MicBtn')
 $status = $win.FindName('Status')
 $win.Topmost = $true
 
+# keep-on-top watchdog: re-raise above other topmost windows and follow the active virtual desktop
+$script:topTimer = New-Object System.Windows.Threading.DispatcherTimer
+$script:topTimer.Interval = [TimeSpan]::FromMilliseconds(1200)
+$script:topTimer.Add_Tick({
+    try {
+      $hwnd = (New-Object System.Windows.Interop.WindowInteropHelper($win)).Handle
+      if ($hwnd -eq [IntPtr]::Zero) { return }
+      [void][GmWin]::SetWindowPos($hwnd, [IntPtr](-1), 0, 0, 0, 0, 0x0013)
+      [void][GmVd]::FollowCurrent($hwnd)
+      if (-not $script:watchLogged) {
+        $script:watchLogged = $true
+        Write-WLog ('watchdog: topmost=' + [GmVd]::IsTopmost($hwnd) + ' vd=' + [GmVd]::Status($hwnd))
+      }
+    } catch {}
+  })
+$script:topTimer.Start()
+Write-WLog 'watchdog started'
+
 $rootBorder.Add_MouseLeftButtonDown({ try { $win.DragMove() } catch {} })
 $win.Add_MouseLeftButtonUp({
     try {

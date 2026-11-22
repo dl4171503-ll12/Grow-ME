@@ -3,6 +3,12 @@
 本项目遵循「版本号写进 `VERSION`、`SKILL.md` metadata、`evals.json` 三处必须一致」的约定。
 发布流程见 [RELEASE.md](RELEASE.md)。
 
+## V1.10.3 — 组件条始终最前 + 跟随虚拟桌面
+
+- 1.2 秒看门狗：`SetWindowPos(HWND_TOPMOST, NOMOVE|NOSIZE|NOACTIVATE)`，被其他置顶窗口压住自动抬回，不抢焦点。
+- 跟随虚拟桌面：`IVirtualDesktopManager` 检测并在切桌面后把组件条 `MoveWindowToDesktop` 到当前桌面。
+- 日志 `watchdog: topmost=True vd=current`；局限：独占全屏游戏 / UAC 安全桌面 / 管理员窗口（需管理员启动组件条）。
+
 ## V1.10.2 — 修复组件条点按钮卡死消失
 
 - 根因：按钮处理器未捕获异常（剪贴板占用时 Clipboard.SetText 抛 ExternalException + EAP Stop）导致 WPF 宿主退出。
